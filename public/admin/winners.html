@@ -1,0 +1,150 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Winners — JackOne Admin</title>
+<link rel="stylesheet" href="/admin/css/admin.css">
+<style>
+    /* Page-local helpers. */
+    .addr-cell { font-size: 12px; line-height: 1.4; max-width: 240px; }
+    .addr-cell b { display: block; color: var(--tx-hi); font-size: 13px; }
+    .addr-cell .phone { color: var(--gold-2); font-weight: 600; }
+    .addr-cell .line { color: var(--tx-mid); }
+    .addr-missing { color: var(--red-2, #ff6b6b); font-style: italic; }
+
+    .track-cell { min-width: 180px; }
+    .track-cell input {
+        width: 100%; box-sizing: border-box;
+        background: rgba(255,255,255,.04); border: 1px solid var(--bd);
+        border-radius: 8px; padding: 6px 10px; color: var(--tx-hi);
+        font-size: 12px; font-family: ui-monospace, Menlo, monospace;
+        outline: 0;
+    }
+    .track-cell input:focus { border-color: var(--gold); }
+
+    .action-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+    .action-cell button { font-size: 11px; padding: 6px 10px; white-space: nowrap; }
+
+    .pill-shipped   { background: rgba(59,130,246,.15); color: #60a5fa; border: 1px solid rgba(59,130,246,.3); }
+    .pill-delivered { background: rgba(168,85,247,.15); color: #c084fc; border: 1px solid rgba(168,85,247,.3); }
+    .pill-claimed   { background: rgba(34,197,94,.15);  color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+</style>
+</head><body>
+<script src="/admin/js/admin.js"></script>
+<script>document.write(sidebar('winners'));</script>
+<main>
+<h1>Winners — prize fulfilment</h1>
+<p class="muted" style="margin-top:-4px;margin-bottom:18px;font-size:13px;">
+    Pipeline: <b>pending</b> → admin ships (set tracking #) → <b>shipped</b> → admin marks delivered → <b>delivered</b> → user confirms receipt → <b>claimed</b>.
+</p>
+
+<table id="t"><thead><tr>
+    <th>ID</th>
+    <th>Winner</th>
+    <th>Product</th>
+    <th>Period</th>
+    <th>Code</th>
+    <th>Ship to</th>
+    <th>Status</th>
+    <th>Tracking</th>
+    <th>Timeline</th>
+    <th>Action</th>
+</tr></thead><tbody></tbody></table>
+
+<script>
+const STATUS_PILL = {
+    pending:   'pill-pending',
+    shipped:   'pill-shipped',
+    delivered: 'pill-delivered',
+    claimed:   'pill-claimed',
+};
+
+function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+}
+
+function addrCell(w) {
+    if (!w.addr_name) {
+        return `<div class="addr-cell addr-missing">no address on file</div>`;
+    }
+    const parts = [w.addr_line, w.addr_city, w.addr_province, w.addr_country].filter(Boolean);
+    return `<div class="addr-cell">
+        <b>${escapeHtml(w.addr_name)}</b>
+        <span class="phone">${escapeHtml(w.addr_phone)}</span>
+        <div class="line">${escapeHtml(parts.join(', '))}</div>
+    </div>`;
+}
+
+function actionCell(w) {
+    if (w.status === 'claimed') {
+        return `<span class="muted">— complete —</span>`;
+    }
+    if (!w.addr_name && w.status === 'pending') {
+        return `<span class="muted" style="color:var(--red-2);">need address</span>`;
+    }
+    if (w.status === 'pending') {
+        return `<button class="btn btn-ok" onclick="saveTracking(${w.id})">Ship</button>`;
+    }
+    if (w.status === 'shipped') {
+        return `
+            <button class="btn btn-sec" onclick="saveTracking(${w.id})">Update tracking</button>
+            <button class="btn btn-ok" onclick="markDelivered(${w.id})">Mark delivered</button>`;
+    }
+    if (w.status === 'delivered') {
+        return `<span class="muted">awaiting user confirm</span>`;
+    }
+    return '';
+}
+
+async function load() {
+    const rows = await Admin.get('/api/admin/winners');
+    const tbody = document.querySelector('#t tbody');
+    if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="10" class="muted" style="text-align:center;padding:30px;">No winners yet.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = rows.map(w => `
+        <tr data-id="${w.id}">
+            <td>${w.id}</td>
+            <td>@${escapeHtml(w.username)}</td>
+            <td>${escapeHtml(w.name_en)}</td>
+            <td>#${w.period_no}</td>
+            <td><code>${w.code}</code></td>
+            <td>${addrCell(w)}</td>
+            <td><span class="pill ${STATUS_PILL[w.status] || 'pill-off'}">${w.status}</span></td>
+            <td class="track-cell">
+                ${(w.status === 'pending' || w.status === 'shipped')
+                    ? `<input id="trk-${w.id}" value="${escapeHtml(w.tracking || '')}" placeholder="Tracking #">`
+                    : `<code>${escapeHtml(w.tracking || '—')}</code>`}
+            </td>
+            <td class="muted" style="font-size:11px;line-height:1.5;">
+                <div>D: ${w.drawn_at}</div>
+                ${w.shipped_at   ? `<div style="color:#60a5fa;">S: ${w.shipped_at}</div>`   : ''}
+                ${w.delivered_at ? `<div style="color:#c084fc;">DL: ${w.delivered_at}</div>` : ''}
+                ${w.claimed_at   ? `<div style="color:#4ade80;">C: ${w.claimed_at}</div>`   : ''}
+            </td>
+            <td class="action-cell">${actionCell(w)}</td>
+        </tr>
+    `).join('');
+}
+
+async function saveTracking(id) {
+    const inp = document.getElementById('trk-' + id);
+    const tracking = (inp?.value || '').trim();
+    if (!tracking) { alert('Enter a tracking number first.'); inp?.focus(); return; }
+    try {
+        await Admin.post('/api/admin/winners/ship', { id, tracking });
+        load();
+    } catch (e) { alert('Failed: ' + e.message); }
+}
+
+async function markDelivered(id) {
+    if (!confirm('Mark this prize as delivered? The user will then be able to confirm receipt.')) return;
+    try {
+        await Admin.post('/api/admin/winners/deliver', { id });
+        load();
+    } catch (e) { alert('Failed: ' + e.message); }
+}
+
+load();
+</script>
+</main></body></html>

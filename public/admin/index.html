@@ -1,0 +1,82 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8">
+<title>Dashboard — JackOne Admin</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/admin/css/admin.css">
+</head><body>
+
+<script>
+const T = localStorage.getItem('lm.admin.token');
+if (!T) location.href = '/admin/login.html';
+</script>
+
+<script src="/admin/js/admin.js"></script>
+<script>document.write(sidebar('index'));</script>
+
+<main>
+    <h1>Dashboard</h1>
+    <div class="cards" id="cards"></div>
+
+    <h2 style="margin-top:32px;font-size:16px;color:var(--tx-mid);font-weight:700;letter-spacing:.3px;text-transform:uppercase;">Quick Actions</h2>
+    <div class="cards" style="margin-top:12px;">
+        <a href="/admin/products.html" class="card" style="text-decoration:none;">
+            <div class="label">Manage</div>
+            <div class="num" style="font-size:18px;color:var(--tx-hi);">Products</div>
+            <div class="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 16-9 5-9-5V8l9-5 9 5v8z"/></svg></div>
+        </a>
+        <a href="/admin/periods.html" class="card" style="text-decoration:none;">
+            <div class="label">Track</div>
+            <div class="num" style="font-size:18px;color:var(--tx-hi);">Periods</div>
+            <div class="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        </a>
+        <a href="/admin/payments.html" class="card" style="text-decoration:none;">
+            <div class="label">Review</div>
+            <div class="num" style="font-size:18px;color:var(--tx-hi);">Payments</div>
+            <div class="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 11h20"/></svg></div>
+        </a>
+        <a href="/admin/withdrawals.html" class="card" style="text-decoration:none;">
+            <div class="label">Process</div>
+            <div class="num" style="font-size:18px;color:var(--tx-hi);">Withdrawals</div>
+            <div class="icn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v14m-5-5 5 5 5-5"/></svg></div>
+        </a>
+    </div>
+</main>
+
+<script>
+const ICONS = {
+    users:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>`,
+    open:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+    drawn:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z"/></svg>`,
+    payments:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 11h20"/></svg>`,
+    withdrawals:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v14m-5-5 5 5 5-5"/></svg>`,
+    money:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+    cart:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>`,
+};
+
+(async () => {
+    try {
+        const s = await Admin.get('/api/admin/dashboard');
+        const cards = [
+            { label: 'Users',            value: s.users,                                             icon: 'users' },
+            { label: 'Open Periods',     value: s.open_periods,                                      icon: 'open' },
+            { label: 'Drawn Periods',    value: s.drawn_periods,                                     icon: 'drawn' },
+            { label: 'Pending Payments', value: s.pending_pay,                                       icon: 'payments' },
+            { label: 'Pending Withdraw', value: s.pending_wd,                                        icon: 'withdrawals' },
+            { label: 'Recharge Total',   value: '$' + (+s.recharge_total).toFixed(2),                icon: 'money' },
+            { label: 'Slots Sold Today', value: s.sold_today,                                        icon: 'cart' },
+        ];
+        document.getElementById('cards').innerHTML = cards.map(c =>
+            `<div class="card">
+                <div class="label">${c.label}</div>
+                <div class="num">${c.value}</div>
+                <div class="icn">${ICONS[c.icon]}</div>
+             </div>`
+        ).join('');
+    } catch (e) {
+        document.getElementById('cards').innerHTML =
+            `<div class="card" style="grid-column:1/-1;"><div class="label">Error</div><div class="num" style="font-size:14px;color:var(--red-2);">${e.message}</div></div>`;
+    }
+})();
+</script>
+</body></html>

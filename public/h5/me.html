@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Page</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div class="me-hero">
+    <div style="display:flex;align-items:center;">
+        <div class="avatar">RS1</div>
+        <div>
+            <div class="name" id="meName" data-i18n="guest"></div>
+            <div class="id" id="meLogin" data-i18n="please_login"></div>
+            <div class="id" id="meId">ID: --</div>
+        </div>
+    </div>
+    <div class="stats">
+        <div><div class="num" id="meBalance">0.00</div><div class="label" data-i18n="balance"></div></div>
+        <div><div class="num" id="mePoints">0</div><div class="label" data-i18n="points"></div></div>
+        <div><div class="num" id="meFreeDraws">0</div><div class="label" data-i18n="free_draws"></div></div>
+    </div>
+</div>
+
+<!-- Daily check-in widget -->
+<div id="checkinCard" class="checkin-card hidden">
+    <div class="checkin-left">
+        <div class="checkin-title" data-i18n="checkin_today"></div>
+        <div class="checkin-streak">
+            <span data-i18n="checkin_streak"></span>:
+            <b id="ckStreak">0</b> <span data-i18n="checkin_day"></span>
+        </div>
+        <div class="checkin-reward">
+            <span data-i18n="next_reward"></span>:
+            <b id="ckReward">¥0</b>
+        </div>
+    </div>
+    <button class="checkin-btn" id="ckBtn" onclick="doCheckin()" data-i18n="checkin"></button>
+</div>
+
+<div class="me-shortcuts">
+    <a href="/h5/orders.html">
+        <div class="icn">📦</div><span data-i18n="my_records"></span>
+    </a>
+    <a href="/h5/wins.html">
+        <div class="icn">🎁</div><span data-i18n="my_wins"></span>
+    </a>
+    <a href="/h5/favorites.html">
+        <div class="icn">⭐</div><span data-i18n="my_favs"></span>
+    </a>
+</div>
+
+<div class="me-list">
+    <a href="/h5/wallet.html">
+        <div class="icn">💰</div><span data-i18n="wallet_recharge"></span><span class="arrow">›</span>
+    </a>
+    <a href="/h5/share.html">
+        <div class="icn">🔗</div>
+        <div><div data-i18n="share"></div><div class="muted" style="font-size:12px" data-i18n="share_note"></div></div>
+        <span class="arrow" style="margin-left:auto">›</span>
+    </a>
+    <a href="/h5/me-team.html">
+        <div class="icn">👥</div>
+        <div><div data-i18n="my_team"></div><div class="muted" style="font-size:12px" data-i18n="my_team_note"></div></div>
+        <span class="arrow" style="margin-left:auto">›</span>
+    </a>
+    <a href="/h5/address.html">
+        <div class="icn">📍</div>
+        <div><div data-i18n="addresses"></div><div class="muted" style="font-size:12px" data-i18n="my_addr"></div></div>
+        <span class="arrow" style="margin-left:auto">›</span>
+    </a>
+    <a href="/h5/share.html">
+        <div class="icn">🏆</div>
+        <div><div data-i18n="commissions"></div><div class="muted" style="font-size:12px" data-i18n="comm_note"></div></div>
+        <span class="arrow" style="margin-left:auto">›</span>
+    </a>
+    <a href="/h5/my-bargains.html">
+        <div class="icn">🔪</div>
+        <div><div data-i18n="my_bargains"></div><div class="muted" style="font-size:12px" data-i18n="bargain_note"></div></div>
+        <span class="arrow" style="margin-left:auto">›</span>
+    </a>
+    <a href="javascript:void(0)" onclick="openSupport()">
+        <div class="icn">💬</div>
+        <div><div data-i18n="support"></div><div class="muted" style="font-size:12px" data-i18n="support_note"></div></div>
+        <span class="arrow" style="margin-left:auto">›</span>
+    </a>
+    <a id="loginRow" href="/h5/login.html">
+        <div class="icn">🔐</div><span data-i18n="login"></span><span class="arrow">›</span>
+    </a>
+    <a id="logoutRow" href="javascript:doLogout()" class="hidden">
+        <div class="icn">🚪</div><span data-i18n="logout"></span><span class="arrow">›</span>
+    </a>
+</div>
+
+<script>
+Layout.mount('me');
+
+async function doLogout() {
+    try { await API.post('/api/auth/logout'); } catch (e) {}
+    API.token(null);
+    location.reload();
+}
+
+async function refreshCheckinCard() {
+    try {
+        const s = await API.get('/api/me/checkin/state');
+        document.getElementById('ckStreak').textContent = s.today_done ? s.current_streak : s.next_streak;
+        document.getElementById('ckReward').textContent = '¥' + (+s.next_reward).toFixed(2);
+        const btn = document.getElementById('ckBtn');
+        if (s.today_done) {
+            btn.disabled = true;
+            btn.textContent = I18N.t('checkin_done');
+        } else {
+            btn.disabled = false;
+            btn.textContent = I18N.t('checkin');
+        }
+        document.getElementById('checkinCard').classList.remove('hidden');
+    } catch (e) { /* not logged in or backend issue — leave hidden */ }
+}
+
+async function doCheckin() {
+    const btn = document.getElementById('ckBtn');
+    btn.disabled = true;
+    try {
+        const r = await API.post('/api/me/checkin', {});
+        if (r.already) {
+            toast(I18N.t('checkin_done'));
+        } else {
+            toast(I18N.tf('day_n_reward', r.streak, (+r.reward).toFixed(2)));
+        }
+        // Refresh hero stats + card
+        const u = await API.get('/api/auth/me');
+        document.getElementById('meBalance').textContent = (+u.balance).toFixed(2);
+        refreshCheckinCard();
+    } catch (e) {
+        btn.disabled = false;
+        toast(e.message);
+    }
+}
+
+(async function () {
+    if (!API.token()) { I18N.apply(); return; }
+    try {
+        const u = await API.get('/api/auth/me');
+        document.getElementById('meName').textContent = u.display_name || u.username;
+        document.getElementById('meLogin').textContent = '@' + u.username;
+        document.getElementById('meId').textContent = 'ID: ' + u.id;
+        document.getElementById('meBalance').textContent = (+u.balance).toFixed(2);
+        document.getElementById('mePoints').textContent = u.points;
+        document.getElementById('meFreeDraws').textContent = u.free_draws || 0;
+        document.getElementById('loginRow').classList.add('hidden');
+        document.getElementById('logoutRow').classList.remove('hidden');
+        refreshCheckinCard();
+    } catch (e) {
+        API.token(null);
+    }
+    I18N.apply();
+})();
+</script>
+</body></html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Latest Reveals — JackOne</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div class="section-title"><span id="wheelTitle">Try Your Luck</span></div>
+
+<div class="wheel-stage">
+    <div class="wheel-pointer"></div>
+    <div class="wheel" id="wheel"></div>
+    <div class="wheel-hub">★</div>
+</div>
+<div style="text-align:center;padding:0 16px 16px;">
+    <button class="btn btn-primary btn-block" id="spinBtn" style="max-width:240px;margin:0 auto;">
+        <span id="spinLabel">Spin the Wheel</span>
+    </button>
+    <div class="muted" style="font-size:11px;margin-top:8px" id="spinHint">Daily free spin · come back tomorrow for another</div>
+</div>
+
+<div class="section-title" data-i18n="upcoming"></div>
+<div class="reveal-grid" id="upcoming"></div>
+<div class="section-title" data-i18n="result"></div>
+<div class="reveal-grid" id="drawn"></div>
+
+<!-- Reveal modal -->
+<div class="modal reveal-modal" id="revealModal">
+    <div class="modal-panel" id="revealPanel">
+        <h3 id="revealTitle" style="font-size:22px;letter-spacing:-.5px;">🎉</h3>
+        <div id="revealPrize" style="font-size:48px;font-weight:900;background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin:8px 0 4px;">+10</div>
+        <div id="revealSub" style="font-size:14px;color:var(--tx-mid);margin-bottom:18px;"></div>
+        <button class="btn btn-primary btn-block" onclick="document.getElementById('revealModal').classList.remove('open')">
+            <span id="revealOk">Awesome!</span>
+        </button>
+    </div>
+</div>
+
+<script>
+Layout.mount('reveals');
+
+document.getElementById('wheelTitle').textContent  = I18N.t('try_your_luck');
+document.getElementById('spinLabel').textContent   = I18N.t('spin_the_wheel');
+document.getElementById('spinHint').textContent    = I18N.t('daily_spin_hint');
+document.getElementById('revealTitle').textContent = I18N.t('congrats');
+document.getElementById('revealOk').textContent    = I18N.t('awesome');
+
+const wheel = document.getElementById('wheel');
+let currentRotation = 0;
+const pts = I18N.t('prize_pts');
+const tryAgain = I18N.t('prize_try_again');
+const prizes = [`+10 ${pts}`, `+5 ${pts}`, tryAgain, `+20 ${pts}`, `+50 ${pts}`, tryAgain, `+100 ${pts}`, `+5 ${pts}`];
+
+document.getElementById('spinBtn').addEventListener('click', () => {
+    const idx = Math.floor(Math.random() * 8);
+    // Center each segment by adding 22.5° (half segment) + segment_start
+    const segCenter = idx * 45 + 22.5;
+    // Spin 5 turns + offset to land segCenter under pointer (pointer at top = 0deg)
+    const target = 360 * 5 + (360 - segCenter);
+    currentRotation += target;
+    wheel.style.transform = `rotate(${currentRotation}deg)`;
+    setTimeout(() => {
+        const prize = prizes[idx];
+        document.getElementById('revealPrize').textContent = prize;
+        document.getElementById('revealSub').textContent = I18N.t('points_use_hint');
+        const modal = document.getElementById('revealModal');
+        modal.classList.add('open');
+        // Confetti
+        modal.querySelectorAll('.confetti').forEach(c => c.remove());
+        LM.confetti(modal.querySelector('.modal-panel'), 50);
+    }, 5200);
+});
+
+(async function () {
+    const d = await API.get('/api/reveals');
+
+    function fmtCountdown(secs) {
+        const h = Math.floor(secs / 3600);
+        const m = Math.floor((secs % 3600) / 60);
+        const s = secs % 60;
+        const pad = n => String(n).padStart(2, '0');
+        return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+
+    const isZh = I18N.get() === 'zh';
+    const periodSuffix = isZh ? '期' : '';
+    document.getElementById('upcoming').innerHTML = d.upcoming.map(p => {
+        // Synthetic deadline so the timer looks alive
+        const dl = Date.now() + (3600 + (p.id * 911) % 28800) * 1000;
+        return `
+        <div class="reveal-card" onclick="location.href='/h5/product.html?period_id=${p.id}'">
+            <div class="img"><img src="${p.cover_image || '/h5/img/products/iphone.jpg'}" alt=""></div>
+            <div style="font-size:13px;margin-top:8px;font-weight:700;color:var(--tx-hi);
+                        display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">
+                (${p.period_no}${periodSuffix}) ${I18N.pickName(p)}
+            </div>
+            <div style="font-size:12px;color:var(--gold-2);margin-top:2px;font-weight:700;">
+                ${I18N.t('value')}: ${fmtMoney(p.value_amount)}
+            </div>
+            <div class="upcoming">⏰ <span data-countdown-deadline="${dl}">--:--:--</span></div>
+        </div>`;
+    }).join('') || `<div class="empty">${I18N.t('empty_list')}</div>`;
+
+    document.getElementById('drawn').innerHTML = d.drawn.map(w => `
+        <div class="reveal-card" onclick="location.href='/h5/product.html?period_id=${w.id}'">
+            <div class="img"><img src="${w.cover_image || '/h5/img/products/iphone.jpg'}" alt=""></div>
+            <span class="pno">${w.period_no}${periodSuffix}</span>
+            <div class="who">${I18N.t('winner')}: <b>${w.display_name || w.username}</b></div>
+            <div class="code">${I18N.t('lucky_code')}: <b>${w.winner_code}</b></div>
+            <div class="muted" style="font-size:11px;margin-top:6px;text-align:center;">${w.drawn_at}</div>
+        </div>
+    `).join('') || `<div class="empty">${I18N.t('empty_list')}</div>`;
+
+    I18N.apply();
+    LM.bindCountdowns();
+})().catch(e => toast(e.message));
+</script>
+</body></html>

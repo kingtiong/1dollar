@@ -1,0 +1,155 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Winner Proofs — JackOne Admin</title>
+<link rel="stylesheet" href="/admin/css/admin.css">
+<style>
+    .filter-row { display: flex; gap: 8px; margin-bottom: 18px; }
+    .filter-row button {
+        padding: 6px 14px; border: 1px solid var(--bd); border-radius: 999px;
+        background: transparent; color: var(--tx-mid); font-size: 12px; cursor: pointer;
+    }
+    .filter-row button.active {
+        background: var(--gold-grad); color: #1a1407; border-color: transparent;
+        font-weight: 700;
+    }
+    .media-cell { width: 140px; }
+    .media-cell img {
+        width: 120px; height: 120px; object-fit: cover; border-radius: 10px;
+        border: 1px solid var(--bd); cursor: zoom-in; display: block;
+    }
+    .media-cell a {
+        display: inline-block; padding: 6px 12px;
+        background: rgba(59,130,246,.15); color: #60a5fa;
+        border-radius: 8px; font-size: 11px; text-decoration: none;
+        border: 1px solid rgba(59,130,246,.3);
+    }
+    .meta-cell { font-size: 12px; line-height: 1.5; min-width: 200px; }
+    .meta-cell .label { color: var(--tx-mute); }
+    .action-cell { display: flex; gap: 6px; flex-wrap: wrap; min-width: 180px; }
+    .action-cell button { font-size: 11px; padding: 6px 10px; white-space: nowrap; }
+    .pill-approved { background: rgba(34,197,94,.15);  color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .pill-rejected { background: rgba(255,59,59,.15);  color: var(--red-2); border: 1px solid rgba(255,59,59,.3); }
+
+    .lightbox {
+        position: fixed; inset: 0; background: rgba(0,0,0,.9); z-index: 99;
+        display: none; align-items: center; justify-content: center; cursor: zoom-out;
+    }
+    .lightbox.show { display: flex; }
+    .lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; }
+</style>
+</head><body>
+<script src="/admin/js/admin.js"></script>
+<script>document.write(sidebar('proofs'));</script>
+<main>
+<h1>Winner Proofs — engagement moderation</h1>
+<p class="muted" style="margin-top:-4px;margin-bottom:16px;font-size:13px;">
+    Winners upload a photo of themselves with the prize (or a video URL) after confirming receipt.
+    Approving grants free draws per the reward settings.
+</p>
+
+<div class="filter-row">
+    <button class="filter active" data-status="pending">Pending</button>
+    <button class="filter" data-status="approved">Approved</button>
+    <button class="filter" data-status="rejected">Rejected</button>
+    <button class="filter" data-status="">All</button>
+</div>
+
+<table id="t"><thead><tr>
+    <th>ID</th>
+    <th>User</th>
+    <th>Prize</th>
+    <th>Kind</th>
+    <th>Media</th>
+    <th>Note</th>
+    <th>Status</th>
+    <th>Submitted</th>
+    <th>Action</th>
+</tr></thead><tbody></tbody></table>
+
+<div class="lightbox" id="lb"><img id="lbImg"></div>
+
+<script>
+const STATUS_PILL = { pending: 'pill-pending', approved: 'pill-approved', rejected: 'pill-rejected' };
+let currentStatus = 'pending';
+
+function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+}
+
+function mediaCell(p) {
+    if (p.kind === 'video') {
+        return `<a href="${escapeHtml(p.media_url)}" target="_blank" rel="noopener">▶ Open video</a>`;
+    }
+    return `<img src="${escapeHtml(p.media_url)}" alt="proof" onclick="openLb('${escapeHtml(p.media_url)}')">`;
+}
+
+function actionCell(p) {
+    if (p.status !== 'pending') {
+        return p.reject_reason
+            ? `<span class="muted" style="font-size:11px;">${escapeHtml(p.reject_reason)}</span>`
+            : `<span class="muted" style="font-size:11px;">+${p.reward_draws} free draw(s)</span>`;
+    }
+    return `
+        <button class="btn btn-ok"  onclick="approve(${p.id})">Approve</button>
+        <button class="btn btn-del" onclick="reject(${p.id})">Reject</button>`;
+}
+
+async function load() {
+    const url = currentStatus ? '/api/admin/proofs?status=' + currentStatus : '/api/admin/proofs';
+    const rows = await Admin.get(url);
+    const tbody = document.querySelector('#t tbody');
+    if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="muted" style="text-align:center;padding:40px;">Nothing in this queue.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = rows.map(p => `
+        <tr>
+            <td>${p.id}</td>
+            <td>@${escapeHtml(p.username)}</td>
+            <td class="meta-cell">
+                <div><b>${escapeHtml(p.name_en)}</b></div>
+                <div><span class="label">Code:</span> <code>${escapeHtml(p.code)}</code></div>
+            </td>
+            <td><span class="pill">${p.kind}</span></td>
+            <td class="media-cell">${mediaCell(p)}</td>
+            <td class="meta-cell">${escapeHtml(p.note || '—')}</td>
+            <td><span class="pill ${STATUS_PILL[p.status]}">${p.status}</span></td>
+            <td class="muted" style="font-size:12px;">${p.created_at}</td>
+            <td class="action-cell">${actionCell(p)}</td>
+        </tr>
+    `).join('');
+}
+
+async function approve(id) {
+    if (!confirm('Approve this proof? Free draws will be credited to the user.')) return;
+    try { await Admin.post('/api/admin/proofs/approve', { id }); load(); }
+    catch (e) { alert('Failed: ' + e.message); }
+}
+async function reject(id) {
+    const reason = prompt('Reason for rejection (the user will see this):');
+    if (!reason) return;
+    try { await Admin.post('/api/admin/proofs/reject', { id, reason }); load(); }
+    catch (e) { alert('Failed: ' + e.message); }
+}
+
+function openLb(src) {
+    document.getElementById('lbImg').src = src;
+    document.getElementById('lb').classList.add('show');
+}
+document.getElementById('lb').addEventListener('click', () => {
+    document.getElementById('lb').classList.remove('show');
+});
+
+document.querySelectorAll('.filter').forEach(b => {
+    b.addEventListener('click', () => {
+        document.querySelectorAll('.filter').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        currentStatus = b.dataset.status;
+        load();
+    });
+});
+
+load();
+</script>
+</main></body></html>

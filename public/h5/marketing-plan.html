@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JackOne · 一夺 — 推广营销方案</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/h5/css/style.css">
+<style>
+.mp-wrap { padding: 16px 14px 40px; }
+.mp-hero {
+    background: var(--gold-grad);
+    color: #1a1300;
+    border-radius: var(--r-lg);
+    padding: 22px 18px;
+    box-shadow: var(--gold-glow), var(--shadow-lg);
+    margin-bottom: 18px;
+}
+.mp-hero .brand-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
+.mp-hero .brand-row svg { display: block; }
+.mp-hero .brand-row .wm { font-size: 18px; font-weight: 900; letter-spacing: -.3px; }
+.mp-hero .brand-row .wm small { font-size: 11px; font-weight: 700; opacity: .7; letter-spacing: 3px; margin-left: 6px; }
+.mp-hero .eyebrow { font-size: 12px; letter-spacing: 3px; opacity: .7; }
+.mp-hero h1 { margin: 6px 0 4px; font-size: 26px; font-weight: 900; line-height: 1.2; }
+.mp-hero p { margin: 0; font-size: 13px; opacity: .85; }
+.mp-hero .slogan {
+    display: inline-block; margin-top: 12px;
+    padding: 5px 10px; border-radius: 999px;
+    background: rgba(26,19,0,.18);
+    font-size: 11px; font-weight: 800; letter-spacing: 2px;
+}
+
+.mp-section {
+    background: var(--bg-2);
+    border: 1px solid var(--bd);
+    border-radius: var(--r-lg);
+    padding: 16px 14px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+}
+.mp-section h2 {
+    margin: 0 0 10px;
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--tx-hi);
+    display: flex; align-items: center; gap: 8px;
+}
+.mp-section h2 .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: var(--gold-grad); color:#1a1300; font-size: 13px; font-weight: 900;
+}
+.mp-section .lead { color: var(--tx-mid); font-size: 13px; margin-bottom: 12px; line-height: 1.65; }
+
+.mp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mp-table th, .mp-table td {
+    padding: 9px 8px; text-align: left;
+    border-bottom: 1px solid var(--bd);
+    vertical-align: top;
+}
+.mp-table th { color: var(--gold-2); font-weight: 700; font-size: 12px; }
+.mp-table td { color: var(--tx); line-height: 1.55; }
+.mp-table tr:last-child td { border-bottom: none; }
+.mp-table .reward { color: var(--gold-2); font-weight: 700; white-space: nowrap; }
+
+.mp-list { margin: 0; padding: 0; list-style: none; }
+.mp-list li {
+    position: relative;
+    padding: 8px 0 8px 22px;
+    color: var(--tx);
+    font-size: 13.5px;
+    line-height: 1.65;
+    border-bottom: 1px dashed var(--bd);
+}
+.mp-list li:last-child { border-bottom: none; }
+.mp-list li::before {
+    content: '◆';
+    position: absolute; left: 0; top: 8px;
+    color: var(--gold);
+    font-size: 10px;
+}
+.mp-list b { color: var(--gold-2); font-weight: 700; }
+
+.rank-card {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px;
+    background: var(--bg-3);
+    border: 1px solid var(--bd);
+    border-radius: var(--r);
+    margin-bottom: 8px;
+}
+.rank-card .left { display: flex; align-items: center; gap: 12px; }
+.rank-card .badge {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 14px;
+    background: linear-gradient(135deg,#2a2d3e,#3a3f55);
+    color: var(--tx-hi);
+    border: 1px solid var(--bd-strong);
+}
+.rank-card .badge.b1 { background: linear-gradient(135deg,#8a6b3f,#5a4628); color:#fff; }
+.rank-card .badge.b2 { background: linear-gradient(135deg,#c0c0c0,#888); color:#1a1300; }
+.rank-card .badge.b3 { background: var(--gold-grad); color:#1a1300; }
+.rank-card .badge.b4 { background: linear-gradient(135deg,#e5e4e2,#a8a8a8); color:#1a1300; }
+.rank-card .badge.b5 { background: linear-gradient(135deg,#b9f2ff,#3aa6c9); color:#0a2a33; }
+.rank-card .name { font-weight: 800; color: var(--tx-hi); font-size: 14px; }
+.rank-card .req { color: var(--tx-mid); font-size: 11.5px; margin-top: 2px; }
+.rank-card .pct {
+    font-size: 18px; font-weight: 900; color: var(--gold-2);
+}
+.rank-card .pct small { display:block; font-size: 10px; color: var(--tx-mute); font-weight: 600; }
+
+.callout {
+    background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(212,175,55,.04));
+    border: 1px solid rgba(212,175,55,.3);
+    border-radius: var(--r);
+    padding: 12px 14px;
+    color: var(--tx);
+    font-size: 13px;
+    line-height: 1.65;
+}
+.callout strong { color: var(--gold-2); }
+
+.warn {
+    background: linear-gradient(135deg, rgba(255,59,59,.10), rgba(255,59,59,.03));
+    border: 1px solid rgba(255,59,59,.25);
+    border-radius: var(--r);
+    padding: 12px 14px;
+    color: var(--tx);
+    font-size: 13px;
+    line-height: 1.65;
+}
+.warn strong { color: var(--red-2); }
+
+.flow {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    margin-top: 10px;
+}
+.flow .step {
+    background: var(--bg-3);
+    border: 1px solid var(--bd);
+    border-radius: var(--r);
+    padding: 10px;
+    font-size: 12.5px;
+    color: var(--tx);
+    line-height: 1.5;
+}
+.flow .step b { color: var(--gold-2); display:block; margin-bottom:2px; font-size: 13px; }
+
+.footer-tip {
+    text-align: center; color: var(--tx-mute); font-size: 11px;
+    padding: 18px 0 0;
+}
+</style>
+</head><body>
+
+<div class="mp-wrap">
+
+    <div class="mp-hero">
+        <div class="brand-row">
+            <svg viewBox="0 0 40 40" width="32" height="32" fill="#1a1300">
+                <path d="M8 17 L11 11 L14.5 15.5 L20 8 L25.5 15.5 L29 11 L32 17 Z"/>
+                <rect x="8" y="17" width="24" height="2.5"/>
+                <path d="M14 24 L21.5 20 L21.5 32 L27 32 L27 34.5 L13 34.5 L13 32 L17.5 32 L17.5 25 L14 26.5 Z"/>
+            </svg>
+            <div class="wm">JackOne 一夺<small>ONE SHOT · ONE JACKPOT</small></div>
+        </div>
+        <div class="eyebrow">MARKETING PLAN · 2026</div>
+        <h1>邀请奖励 &amp; 团队等级奖金方案</h1>
+        <p>三层裂变机制 · 直推奖 + 团队奖 + 等级奖 · 让每一位会员都成为合伙人</p>
+        <span class="slogan">一注一夺 · 一夺即赢</span>
+    </div>
+
+    <!-- 1. 总览 -->
+    <div class="mp-section">
+        <h2><span class="num">1</span>方案总览</h2>
+        <p class="lead">
+            本方案在现有 <b style="color:var(--gold-2)">10% 单层直推佣金</b> 的基础上,
+            升级为「<b style="color:var(--gold-2)">直推奖 + 团队业绩奖 + 等级差额奖</b>」三合一裂变体系,
+            激励老会员持续邀请新人, 并奖励团队成长。
+        </p>
+        <div class="flow">
+            <div class="step"><b>① 直推奖</b>邀请好友注册并消费, 立即获得现金奖励</div>
+            <div class="step"><b>② 团队奖</b>团队成员消费, 按等级获取业绩分红</div>
+            <div class="step"><b>③ 等级奖</b>升级 V1~V5, 月度差额奖+礼包</div>
+            <div class="step"><b>④ 活动奖</b>排行榜 / 团队挑战 / 节日加倍</div>
+        </div>
+    </div>
+
+    <!-- 2. 直推奖 -->
+    <div class="mp-section">
+        <h2><span class="num">2</span>直推奖 (一级邀请)</h2>
+        <p class="lead">直接邀请的下线产生的每一笔行为, 邀请人都能立即获得奖励, 提升即时满足感。</p>
+        <table class="mp-table">
+            <thead><tr><th>触发条件</th><th>奖励内容</th><th>说明</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td>好友成功注册并实名</td>
+                    <td class="reward">¥2 红包</td>
+                    <td>无需消费即可发放, 鼓励快速拉新</td>
+                </tr>
+                <tr>
+                    <td>好友首次参与抽奖</td>
+                    <td class="reward">15% 佣金</td>
+                    <td>首单加成 (常规 10% + 首单奖励 5%)</td>
+                </tr>
+                <tr>
+                    <td>好友 7 天内充值 ≥ ¥100</td>
+                    <td class="reward">赠 1 张体验券</td>
+                    <td>加速新人激活, 缩短转化周期</td>
+                </tr>
+                <tr>
+                    <td>好友后续每次消费</td>
+                    <td class="reward">10% 佣金 (长期)</td>
+                    <td>终身绑定, 老用户被动收入</td>
+                </tr>
+                <tr>
+                    <td>好友中奖</td>
+                    <td class="reward">1% 幸运奖金</td>
+                    <td>"幸运推荐人"机制, 共享喜悦</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. 团队等级奖金 -->
+    <div class="mp-section">
+        <h2><span class="num">3</span>团队等级奖金 (V1~V5)</h2>
+        <p class="lead">
+            团队等级根据 <b>当月团队总业绩</b> 与 <b>有效直推人数</b> 评定,
+            每月初重新计算, 等级越高分红越多, 越能享受全网团队收益。
+        </p>
+
+        <div class="rank-card">
+            <div class="left">
+                <span class="badge b1">V1</span>
+                <div>
+                    <div class="name">青铜会员</div>
+                    <div class="req">5 位有效直推 · 团队业绩 ¥1,000+</div>
+                </div>
+            </div>
+            <div class="pct">1%<small>团队业绩</small></div>
+        </div>
+
+        <div class="rank-card">
+            <div class="left">
+                <span class="badge b2">V2</span>
+                <div>
+                    <div class="name">白银合伙人</div>
+                    <div class="req">10 位有效直推 · 团队业绩 ¥5,000+</div>
+                </div>
+            </div>
+            <div class="pct">2%<small>团队业绩</small></div>
+        </div>
+
+        <div class="rank-card">
+            <div class="left">
+                <span class="badge b3">V3</span>
+                <div>
+                    <div class="name">黄金合伙人</div>
+                    <div class="req">团队业绩 ¥20,000 · 含 2 条白银线</div>
+                </div>
+            </div>
+            <div class="pct">3%<small>团队业绩</small></div>
+        </div>
+
+        <div class="rank-card">
+            <div class="left">
+                <span class="badge b4">V4</span>
+                <div>
+                    <div class="name">铂金合伙人</div>
+                    <div class="req">团队业绩 ¥50,000 · 含 2 条黄金线</div>
+                </div>
+            </div>
+            <div class="pct">4%<small>团队业绩</small></div>
+        </div>
+
+        <div class="rank-card">
+            <div class="left">
+                <span class="badge b5">V5</span>
+                <div>
+                    <div class="name">钻石合伙人</div>
+                    <div class="req">团队业绩 ¥200,000 · 含 3 条铂金线</div>
+                </div>
+            </div>
+            <div class="pct">5%<small>团队业绩</small></div>
+        </div>
+
+        <div class="callout" style="margin-top:12px">
+            <strong>差额奖机制 ·</strong>
+            若上下级同级别, 上级仅在下级所在分支获得 0% 差额奖, 防止层级叠加导致成本失控;
+            同时建议 <strong>奖金深度上限设为 5~7 层</strong>, 月度结算并需重新达标维持等级。
+        </div>
+    </div>
+
+    <!-- 4. 活动加码 -->
+    <div class="mp-section">
+        <h2><span class="num">4</span>活动加码 (引爆裂变)</h2>
+        <ul class="mp-list">
+            <li><b>启动 30 天加倍</b> — 上线首月所有佣金 ×2, 让早期种子用户快速看到收益</li>
+            <li><b>邀请排行榜</b> — 每周直推榜 Top 10 瓜分 ¥3,000 现金池, 公开喜报</li>
+            <li><b>里程碑徽章</b> — 直推达 5/10/25/50/100 人, 分别解锁 ¥10/¥50/¥200/¥600/¥2,000 奖励</li>
+            <li><b>团队冲刺挑战</b> — "本周团队业绩破 ¥X 万, 全员瓜分 ¥Y 奖金池"</li>
+            <li><b>节日双倍周</b> — 春节/国庆/双 11 期间, 直推奖与团队奖同步 ×2</li>
+            <li><b>素材分享包</b> — 提供海报 / 短视频 / 微信话术, 自动嵌入邀请码, 一键转发</li>
+        </ul>
+    </div>
+
+    <!-- 5. 合规与风控 -->
+    <div class="mp-section">
+        <h2><span class="num">5</span>合规与风控</h2>
+        <div class="warn">
+            <strong>重要 ·</strong> 所有奖金必须 <b>与真实消费/参与挂钩</b>, 严禁仅以"拉人头"作为奖励依据。
+            建议在用户协议中明确公示比例, 后台设置 <b>一键暂停开关</b>, 并对单日最高佣金设置封顶,
+            防止刷单与资金链风险。
+        </div>
+    </div>
+
+    <!-- 6. 落地步骤 -->
+    <div class="mp-section">
+        <h2><span class="num">6</span>技术落地步骤</h2>
+        <ul class="mp-list">
+            <li><b>① 数据库</b> 新增 <code style="color:var(--gold-2)">ranks</code>、<code style="color:var(--gold-2)">user_ranks</code> (月度快照)、<code style="color:var(--gold-2)">group_bonuses</code> 三张表</li>
+            <li><b>② 业务层</b> 新建 <code style="color:var(--gold-2)">GroupBonusService</code>, 沿 referrer_id 链向上结算 N 层奖金</li>
+            <li><b>③ 定时任务</b> 每日凌晨汇总团队业绩, 月初计算等级并冻结结算</li>
+            <li><b>④ 用户界面</b> 增加「我的团队」页面: 族谱树 + 等级进度条 + 本月业绩</li>
+            <li><b>⑤ 管理后台</b> 配置等级阈值、奖金比例、活动开关, 全部可视化调整</li>
+        </ul>
+    </div>
+
+    <div class="footer-tip">
+        © 2026 JackOne · 一夺 · 营销方案 V1.0 · 仅供内部参考
+    </div>
+</div>
+
+</body></html>

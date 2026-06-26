@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logo Concepts — JackOne</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+<style>
+.pv-wrap { padding: 20px 16px 60px; }
+.pv-title { font-size: 22px; font-weight: 900; color: var(--tx-hi); letter-spacing: -.3px; margin-bottom: 4px; }
+.pv-sub   { font-size: 12px; color: var(--tx-mid); margin-bottom: 24px; line-height: 1.6; }
+.pv-card {
+    background: var(--bg-2); border: 1px solid var(--bd);
+    border-radius: var(--r-lg); padding: 18px;
+    margin-bottom: 16px; box-shadow: var(--shadow);
+}
+.pv-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--bd);
+}
+.pv-head .name { font-size: 16px; font-weight: 800; color: var(--gold-2); }
+.pv-head .tag  { font-size: 10px; font-weight: 700; color: var(--tx-mute); letter-spacing: 2px; }
+.pv-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: center; }
+.pv-cell { text-align: center; }
+.pv-cell .label {
+    font-size: 10px; font-weight: 700; color: var(--tx-mute);
+    letter-spacing: 1.5px; margin-top: 8px;
+}
+.pv-cell .frame {
+    height: 100px; display: grid; place-items: center;
+    background: var(--bg-0); border-radius: 12px;
+    border: 1px solid var(--bd);
+}
+.pv-cell .frame.small { height: 60px; }
+.pv-cell .frame.tabbar {
+    height: 60px;
+    background: linear-gradient(180deg, rgba(20,22,32,.85), rgba(15,17,24,.95));
+}
+.pv-disc {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--gold-grad); color: #1a1407;
+    display: grid; place-items: center;
+    box-shadow: var(--gold-glow), inset 0 0 0 2px rgba(255,255,255,.25);
+}
+.pv-desc { color: var(--tx); font-size: 12.5px; line-height: 1.7; margin-top: 14px; }
+.pv-desc b { color: var(--gold-2); }
+.pv-pick {
+    display: inline-block; margin-top: 14px;
+    padding: 9px 22px; background: var(--gold-grad);
+    color: #1a1300; font-weight: 900; font-size: 13px; letter-spacing: 1px;
+    border-radius: 999px; text-decoration: none;
+    box-shadow: var(--gold-glow);
+}
+.pv-current {
+    background: rgba(255,59,59,.06); border-color: rgba(255,59,59,.25);
+}
+.pv-current .pv-head .name { color: var(--red-2); }
+</style>
+</head><body>
+<div class="pv-wrap">
+    <div class="pv-title">JackOne — Logo Concepts</div>
+    <div class="pv-sub">
+        Three alternatives to replace the current mark. Each shown at large, at
+        favicon size, and inside the actual topbar disc so you can see how it'll
+        look in the live UI. Reply with the letter (A / B / C) and I'll deploy.
+    </div>
+
+    <!-- Current -->
+    <div class="pv-card pv-current">
+        <div class="pv-head">
+            <div class="name">Current — Slab "1" + small spark</div>
+            <div class="tag">IN USE NOW</div>
+        </div>
+        <div class="pv-row">
+            <div class="pv-cell">
+                <div class="frame">
+                    <svg viewBox="0 0 64 64" width="80" height="80">
+                        <rect width="64" height="64" rx="14" fill="#0e1018"/>
+                        <circle cx="32" cy="32" r="26" fill="#d4af37"/>
+                        <g fill="#1a1407">
+                            <path d="M46 14 L47.6 19.2 L53 21 L47.6 22.8 L46 28 L44.4 22.8 L39 21 L44.4 19.2 Z"/>
+                            <path d="M21 25 L33 19 L33 46 L41 46 L41 50 L20 50 L20 46 L28 46 L28 26 L21 28 Z"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="label">LARGE 80px</div>
+            </div>
+            <div class="pv-cell">
+                <div class="frame small">
+                    <svg viewBox="0 0 64 64" width="20" height="20">
+                        <rect width="64" height="64" rx="14" fill="#0e1018"/>
+                        <circle cx="32" cy="32" r="26" fill="#d4af37"/>
+                        <g fill="#1a1407">
+                            <path d="M46 14 L47.6 19.2 L53 21 L47.6 22.8 L46 28 L44.4 22.8 L39 21 L44.4 19.2 Z"/>
+                            <path d="M21 25 L33 19 L33 46 L41 46 L41 50 L20 50 L20 46 L28 46 L28 26 L21 28 Z"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="label">FAVICON 20px</div>
+            </div>
+            <div class="pv-cell">
+                <div class="frame tabbar">
+                    <div class="pv-disc">
+                        <svg viewBox="0 0 40 40" width="22" height="22" fill="currentColor">
+                            <path d="M30 5 L31.2 9 L35 10 L31.2 11 L30 15 L28.8 11 L25 10 L28.8 9 Z"/>
+                            <path d="M13 15 L22 11 L22 32 L28 32 L28 35 L12 35 L12 32 L18 32 L18 16.5 L13 18 Z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="label">TOPBAR USE</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Concept A: Crown -->
+    <div class="pv-card">
+        <div class="pv-head">
+            <div class="name">A · Crown One</div>
+            <div class="tag">PREMIUM · WINNER</div>
+        </div>
+        <div class="pv-row">
+            <div class="pv-cell">
+                <div class="frame"><img src="/h5/img/logo-concepts/concept-a-crown.svg" width="80" height="80"></div>
+                <div class="label">LARGE 80px</div>
+            </div>
+            <div class="pv-cell">
+                <div class="frame small"><img src="/h5/img/logo-concepts/concept-a-crown.svg" width="20" height="20"></div>
+                <div class="label">FAVICON 20px</div>
+            </div>
+            <div class="pv-cell">
+                <div class="frame tabbar">
+                    <div class="pv-disc">
+                        <svg viewBox="0 0 40 40" width="22" height="22" fill="currentColor">
+                            <path d="M8 17 L11 11 L14.5 15.5 L20 8 L25.5 15.5 L29 11 L32 17 Z"/>
+                            <rect x="8" y="17" width="24" height="2.5"/>
+                            <path d="M14 24 L21.5 20 L21.5 32 L27 32 L27 34.5 L13 34.5 L13 32 L17.5 32 L17.5 25 L14 26.5 Z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="label">TOPBAR USE</div>
+            </div>
+        </div>
+        <div class="pv-desc">
+            A bold numeral 1 wearing a <b>3-peak gem crown</b>. Replaces the floating
+            spark with something intentional and premium. Reads "the #1 winner"
+            without needing words. Strongest "high-roller" vibe of the three.
+        </div>
+    </div>
+
+    <!-- Concept B: Coin -->
+    <div class="pv-card">
+        <div class="pv-head">
+            <div class="name">B · Mint Coin</div>
+            <div class="tag">JACKPOT · TOKEN</div>
+        </div>
+        <div class="pv-row">
+            <div class="pv-cell">
+                <div class="frame"><img src="/h5/img/logo-concepts/concept-b-coin.svg" width="80" height="80"></div>
+                <div class="label">LARGE 80px</div>
+            </div>
+            <div class="pv-cell">
+                <div class="frame small"><img src="/h5/img/logo-concepts/concept-b-coin.svg" width="20" height="20"></div>
+                <div class="label">FAVICON 20px</div>
+            </div>
+            <div class="pv-cell">
+                <div class="frame tabbar">
+                    <div class="pv-disc">
+                        <svg viewBox="0 0 40 40" width="24" height="24" fill="currentColor">
+                            <circle cx="20" cy="20" r="17.5" fill="none" stroke="currentColor" stroke-width="1"/>
+                            <path d="M14 16 L22 12 L22 28 L28 28 L28 30.5 L13 30.5 L13 28 L18 28 L18 18 L14 19 Z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="label">TOPBAR USE</div>
+            </div>
+        </div>
+        <div class="pv-desc">
+            A <b>milled-rim coin</b> with the 1 stamped in relief and "ONE" struck
+            below. Radial gold gradient gives 3D depth — feels like an actual
+            casino chip / commemorative coin. Most "1元夺宝" native of the three.
+        </div>
+    </div>
+
+    <!-- Concept C: Star -->
+    <div class="pv-card">
+        <div class="pv-head">
+            <div class="name">C · Star One</div>
+            <div class="tag">ICONIC · CLEAN</div>
+        </div>
+        <div class="pv-row">
+            <div class="pv-cell">
+                <div class="frame"><img src="/h5/img/logo-concepts/concept-c-star.svg" width="80" height="80"></div>
+                <div class="label">LARGE 80px</div>
+            </div>
+            <div class="pv-cell">
+                <div class="frame small"><img src="/h5/img/logo-concepts/concept-c-star.svg" width="20" height="20"></div>
+                <div class="label">FAVICON 20px</div>
+            </div>
+            <div class="pv-cell">
+                <div class="frame tabbar">
+                    <div class="pv-disc">
+                        <svg viewBox="0 0 40 40" width="22" height="22" fill="currentColor">
+                            <path d="M20 4 L23 12 L31 12.5 L25 18 L27 26 L20 21.5 L13 26 L15 18 L9 12.5 L17 12 Z"/>
+                            <path d="M14 28 L21.5 24 L21.5 33 L27 33 L27 35.5 L13 35.5 L13 33 L17.5 33 L17.5 28.5 L14 30 Z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="label">TOPBAR USE</div>
+            </div>
+        </div>
+        <div class="pv-desc">
+            A <b>bold 5-point star</b> above a chunky 1. The original spirit but
+            dialed up — the star is integrated, prominent, and reads at every size.
+            Most modern and minimal of the three; works equally well as app icon
+            and tiny favicon.
+        </div>
+    </div>
+
+</div>
+</body></html>

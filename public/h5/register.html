@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Register — JackOne</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div style="text-align:center;padding:36px 0 8px;">
+    <div style="display:inline-grid;place-items:center;width:80px;height:80px;border-radius:50%;
+                background:var(--gold-grad);color:#1a1407;font-weight:900;font-size:30px;
+                box-shadow:var(--gold-glow),inset 0 0 0 3px rgba(255,255,255,.25);">
+        <svg viewBox="0 0 40 40" width="40" height="40" fill="currentColor" style="display:block;">
+            <path d="M8 17 L11 11 L14.5 15.5 L20 8 L25.5 15.5 L29 11 L32 17 Z"/>
+            <rect x="8" y="17" width="24" height="2.5"/>
+            <path d="M14 24 L21.5 20 L21.5 32 L27 32 L27 34.5 L13 34.5 L13 32 L17.5 32 L17.5 25 L14 26.5 Z"/>
+        </svg>
+    </div>
+    <div style="margin-top:14px;font-size:22px;font-weight:800;color:var(--tx-hi);letter-spacing:-.3px;">Create Account</div>
+    <div style="font-size:11px;color:var(--gold-2);font-weight:700;letter-spacing:2px;margin-top:4px;">JOIN JACKONE</div>
+</div>
+
+<div class="field"><label data-i18n="username"></label><input id="u" autocomplete="username"></div>
+<div class="field"><label>Email</label><input id="e" type="email" autocomplete="email"></div>
+<div class="field"><label data-i18n="password"></label><input id="p" type="password" autocomplete="new-password"></div>
+<div class="field"><label data-i18n="referral_code"></label><input id="r" placeholder="Optional"></div>
+<div class="field">
+    <button class="btn btn-primary btn-block" id="btn" data-i18n="register"></button>
+</div>
+<div class="field right">
+    <a href="/h5/login.html" data-i18n="login" style="color:var(--gold-2);font-weight:600;font-size:13px;"></a>
+</div>
+
+<script>
+Layout.mount('me');
+const refParam = new URLSearchParams(location.search).get('ref');
+if (refParam) document.getElementById('r').value = refParam;
+
+document.getElementById('btn').addEventListener('click', async () => {
+    const u = document.getElementById('u').value.trim();
+    const e = document.getElementById('e').value.trim();
+    const p = document.getElementById('p').value;
+    const r = document.getElementById('r').value.trim();
+    try {
+        const x = await API.post('/api/auth/register',
+            { username: u, email: e, password: p, referral_code: r });
+        API.token(x.token);
+        location.href = '/h5/me.html';
+    } catch (er) { toast(er.message); }
+});
+
+['u','e','p','r'].forEach(id => document.getElementById(id).addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') document.getElementById('btn').click();
+}));
+</script>
+</body></html>

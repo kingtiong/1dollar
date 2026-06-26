@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Users</title>
+<link rel="stylesheet" href="/admin/css/admin.css"></head><body>
+<script src="/admin/js/admin.js"></script>
+<script>document.write(sidebar('users'));</script>
+<main>
+<h1>Users</h1>
+<div class="toolbar">
+    <input id="q" placeholder="search username / email / phone">
+    <button class="btn btn-sec" onclick="load()">Search</button>
+</div>
+<table id="t"><thead><tr>
+<th>ID</th><th>Username</th><th>Email</th><th>Display</th><th>Balance</th><th>Points</th>
+<th>RefCode</th><th>RefBy</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody></tbody></table>
+
+<div class="modal" id="m"><div class="modal-panel">
+<h3>Adjust balance</h3>
+<input type="hidden" id="f-uid">
+<div class="row"><label>amount (+/-)</label><input id="f-amt" type="number" step="0.01"></div>
+<div class="row"><label>note</label><input id="f-note"></div>
+<div style="text-align:right">
+    <button class="btn btn-sec" onclick="closeM()">Cancel</button>
+    <button class="btn btn-pri" onclick="adjust()">Apply</button>
+</div>
+</div></div>
+
+<script>
+async function load() {
+    const q = document.getElementById('q').value;
+    const rows = await Admin.get('/api/admin/users' + (q?'?q='+encodeURIComponent(q):''));
+    document.querySelector('#t tbody').innerHTML = rows.map(u => `
+        <tr><td>${u.id}</td><td>${u.username}</td><td>${u.email||''}</td>
+        <td>${u.display_name||''}</td><td>$${(+u.balance).toFixed(2)}</td>
+        <td>${u.points}</td><td>${u.referral_code}</td><td>${u.referrer_id||''}</td>
+        <td>${u.status==1?pill('on','active'):pill('banned','banned')}</td><td>${u.created_at}</td>
+        <td>
+            <button class="btn btn-sec" onclick="openAdjust(${u.id})">±</button>
+            <button class="btn btn-warn" onclick="ban(${u.id}, ${u.status==1?0:1})">${u.status==1?'Ban':'Unban'}</button>
+        </td></tr>`).join('');
+}
+function openAdjust(uid) {
+    document.getElementById('f-uid').value = uid;
+    document.getElementById('f-amt').value = '';
+    document.getElementById('f-note').value = '';
+    document.getElementById('m').classList.add('open');
+}
+function closeM() { document.getElementById('m').classList.remove('open'); }
+async function adjust() {
+    try {
+        await Admin.post('/api/admin/users/adjust', {
+            user_id: +document.getElementById('f-uid').value,
+            amount: +document.getElementById('f-amt').value,
+            note: document.getElementById('f-note').value,
+        });
+        closeM(); load();
+    } catch (e) { alert(e.message); }
+}
+async function ban(id, s) {
+    await Admin.post('/api/admin/users/status', { user_id: id, status: s });
+    load();
+}
+load();
+</script>
+</main></body></html>

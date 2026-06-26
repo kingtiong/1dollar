@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wallet</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div class="me-hero">
+    <div data-i18n="balance" style="opacity:.8"></div>
+    <div style="font-size:32px;font-weight:800;margin-top:6px;" id="bal">$0.00</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;">
+        <button class="btn" style="background:#fff;color:var(--c-primary);" onclick="openRecharge()" data-i18n="recharge"></button>
+        <button class="btn" style="background:rgba(255,255,255,.18);color:#fff;border:1px solid #fff;" onclick="openWithdraw()" data-i18n="withdraw"></button>
+    </div>
+</div>
+
+<div class="section-title" id="txTitle">Transactions</div>
+<div class="me-list" id="txList"></div>
+
+<div class="modal" id="rechargeModal">
+    <div class="modal-panel">
+        <h3 data-i18n="recharge"></h3>
+        <div class="field"><label data-i18n="amount"></label><input id="rAmt" type="number" min="10" value="100"></div>
+        <div class="field"><label data-i18n="gateway"></label>
+            <select id="rGw">
+                <option value="manual">Bank Transfer</option>
+                <option value="usdt">USDT (TRC20)</option>
+            </select>
+        </div>
+        <div id="rInfo" class="field muted" style="font-size:13px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button class="btn btn-outline btn-block" onclick="closeM('rechargeModal')" data-i18n="cancel"></button>
+            <button class="btn btn-primary btn-block" onclick="doRecharge()">OK</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="withdrawModal">
+    <div class="modal-panel">
+        <h3 data-i18n="withdraw"></h3>
+        <div class="field"><label data-i18n="amount"></label><input id="wAmt" type="number" min="100" value="100"></div>
+        <div class="field"><label>Method</label>
+            <select id="wMethod"><option value="usdt">USDT</option><option value="bank">Bank</option></select>
+        </div>
+        <div class="field"><label>Payee info</label><input id="wPayee" placeholder="Address / bank account"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button class="btn btn-outline btn-block" onclick="closeM('withdrawModal')" data-i18n="cancel"></button>
+            <button class="btn btn-primary btn-block" onclick="doWithdraw()">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+Layout.mount('me');
+
+function closeM(id) { document.getElementById(id).classList.remove('open'); }
+function openRecharge() { document.getElementById('rechargeModal').classList.add('open'); }
+function openWithdraw() { document.getElementById('withdrawModal').classList.add('open'); }
+
+async function load() {
+    if (!API.token()) return location.href = '/h5/login.html';
+    const s = await API.get('/api/wallet/summary');
+    document.getElementById('bal').textContent = '$' + (+s.balance).toFixed(2);
+
+    const rows = await API.get('/api/wallet/transactions');
+    document.getElementById('txList').innerHTML = rows.map(r => `
+        <a>
+            <div class="icn">${r.amount>0?'＋':'－'}</div>
+            <div><div>${r.kind}</div><div class="muted" style="font-size:12px">${r.note || ''} · ${r.created_at}</div></div>
+            <span class="extra" style="color:${r.amount>0?'#2e7d32':'#c62828'}">${(+r.amount).toFixed(2)}</span>
+        </a>`).join('') || `<div class="empty">${I18N.t('empty_list')}</div>`;
+}
+
+async function doRecharge() {
+    const a = +document.getElementById('rAmt').value;
+    const g = document.getElementById('rGw').value;
+    try {
+        const r = await API.post('/api/wallet/recharge', { amount: a, gateway: g });
+        let msg = `Order ${r.order_no}.`;
+        if (r._instructions && r._instructions.address) msg += '\nSend to: ' + r._instructions.address;
+        toast(msg);
+        closeM('rechargeModal');
+        load();
+    } catch (e) { toast(e.message); }
+}
+async function doWithdraw() {
+    const a = +document.getElementById('wAmt').value;
+    const m = document.getElementById('wMethod').value;
+    const p = document.getElementById('wPayee').value;
+    try {
+        await API.post('/api/wallet/withdraw', { amount: a, method: m, payee_info: { detail: p } });
+        toast('Withdraw requested');
+        closeM('withdrawModal');
+        load();
+    } catch (e) { toast(e.message); }
+}
+load().catch(e => toast(e.message));
+</script>
+</body></html>

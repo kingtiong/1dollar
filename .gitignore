@@ -1,0 +1,21 @@
+# Secrets — recreate from config/config.local.example.php on the new server
+config/config.local.php
+
+# Runtime data
+storage/cache/*
+storage/logs/*
+storage/sessions/*
+*.log
+
+# User-uploaded files (migrate separately via rsync/scp)
+public/uploads/*
+!public/uploads/.gitkeep
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+
+# Dependencies (reinstall on new server)
+/vendor/
+/node_modules/

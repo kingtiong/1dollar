@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Withdrawals</title>
+<link rel="stylesheet" href="/admin/css/admin.css"></head><body>
+<script src="/admin/js/admin.js"></script>
+<script>document.write(sidebar('withdrawals'));</script>
+<main>
+<h1>Withdrawals</h1>
+<div class="toolbar">
+    <select id="st" onchange="load()">
+        <option value="pending">Pending</option>
+        <option value="paid">Paid</option>
+        <option value="rejected">Rejected</option>
+    </select>
+</div>
+<table id="t"><thead><tr>
+<th>ID</th><th>User</th><th>Amount</th><th>Method</th><th>Payee</th><th>Created</th><th>Actions</th>
+</tr></thead><tbody></tbody></table>
+<script>
+async function load() {
+    const st = document.getElementById('st').value;
+    const rows = await Admin.get('/api/admin/withdrawals?status=' + st);
+    document.querySelector('#t tbody').innerHTML = rows.map(w => `
+        <tr>
+            <td>${w.id}</td><td>@${w.username}</td>
+            <td>$${(+w.amount).toFixed(2)}</td><td>${w.method}</td>
+            <td><code style="font-size:11px">${w.payee_info}</code></td><td>${w.created_at}</td>
+            <td>${w.status === 'pending' ? `
+                <button class="btn btn-ok" onclick="approve(${w.id})">Pay</button>
+                <button class="btn btn-del" onclick="reject(${w.id})">Reject</button>` : pill(w.status==='paid'?'on':(w.status==='rejected'?'banned':'pending'), w.status)}</td>
+        </tr>`).join('');
+}
+async function approve(id) {
+    const tracking = prompt('Tx hash / receipt id') || '';
+    await Admin.post('/api/admin/withdrawals/approve', { id, note: tracking });
+    load();
+}
+async function reject(id) {
+    if (!confirm('Reject? Funds will be refunded.')) return;
+    await Admin.post('/api/admin/withdrawals/reject', { id });
+    load();
+}
+load();
+</script>
+</main></body></html>

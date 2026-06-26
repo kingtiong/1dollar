@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JackOne — One Shot, One Jackpot</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head>
+<body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div id="hero" class="hero">
+    <div class="hero-slides" id="heroSlides"></div>
+    <div class="hero-dots" id="heroDots"></div>
+</div>
+
+<div class="winner-strip" id="winners"></div>
+
+<div class="section-title">
+    <span id="catTitle">Categories</span>
+</div>
+<div class="cat-tabs" id="catTabs"></div>
+
+<div class="section-title">
+    <span id="featuredTitle">Featured Periods</span>
+</div>
+<div class="grid" id="grid"></div>
+
+<script>
+Layout.mount('home');
+document.getElementById('catTitle').textContent = I18N.t('categories_title');
+document.getElementById('featuredTitle').textContent = I18N.t('featured_periods');
+
+// Deterministic per-period close time: 18h–34h from now based on period_id
+function periodDeadline(periodId) {
+    const seed = (periodId * 9301 + 49297) % 233280;
+    const hoursOffset = 18 + (seed % 16); // 18..34h
+    return Date.now() + hoursOffset * 3600 * 1000;
+}
+
+function renderHero(slides) {
+    const wrap = document.getElementById('heroSlides');
+    const dots = document.getElementById('heroDots');
+    wrap.innerHTML = slides.map((s, i) => `
+        <div class="hero-slide ${i===0?'active':''}" style="background-image:url('${s.image}')">
+            <div class="hero-body">
+                <span class="hero-tag">${s.tag}</span>
+                <div class="hero-title">${s.title}</div>
+                <div class="hero-sub">${s.sub}</div>
+                <button class="hero-cta" onclick="${s.cta}">
+                    ${I18N.t('join_now')}
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </div>
+    `).join('');
+    dots.innerHTML = slides.map((_,i) => `<span class="${i===0?'active':''}"></span>`).join('');
+    let cur = 0;
+    setInterval(() => {
+        cur = (cur + 1) % slides.length;
+        wrap.querySelectorAll('.hero-slide').forEach((el, i) => el.classList.toggle('active', i===cur));
+        dots.querySelectorAll('span').forEach((el, i) => el.classList.toggle('active', i===cur));
+    }, 5000);
+}
+
+async function load() {
+    const cid = new URLSearchParams(location.search).get('category_id');
+    const data = await API.get('/api/home' + (cid ? '?category_id=' + cid : ''));
+
+    // Hero — build from top 3 most-funded products
+    const top = [...data.products]
+        .sort((a,b) => b.sold_slots/b.total_slots - a.sold_slots/a.total_slots)
+        .slice(0, 3);
+    const heroTags = ['hero_tag_hot', 'hero_tag_closing', 'hero_tag_featured'];
+    const heroSlides = top.map((p, i) => ({
+        image: p.cover_image || '/h5/img/products/iphone.jpg',
+        tag:   I18N.t(heroTags[i] || 'hero_tag_featured'),
+        title: I18N.pickName(p),
+        sub:   I18N.tf('win_from', '$' + p.slot_price) + ' · ' +
+               I18N.tf('slots_left', p.total_slots - p.sold_slots),
+        cta:   `location.href='/h5/product.html?period_id=${p.period_id}'`,
+    }));
+    renderHero(heroSlides);
+
+    // Winners strip
+    const ws = document.getElementById('winners');
+    const isZh = I18N.get() === 'zh';
+    const periodLabel = (n) => isZh ? ('第' + n + '期') : (I18N.t('period') + ' ' + n);
+    const lead = `<div class="lead">
+        <div class="crown">👑</div>
+        <div data-i18n="winner">${I18N.t('winner')}</div>
+        <button class="more" onclick="location.href='/h5/reveals.html'">${I18N.t('more')} →</button>
+    </div>`;
+    ws.innerHTML = lead + data.winners.map(w => `
+        <div class="winner-card" onclick="location.href='/h5/product.html?period_id=${w.period_id}'">
+            <span class="pno">${periodLabel(w.period_no)}</span>
+            <img src="${w.cover_image || '/h5/img/products/iphone.jpg'}" alt="">
+            <div class="name">${w.display_name || w.username}</div>
+        </div>
+    `).join('');
+
+    // Categories
+    const cats = data.categories;
+    document.getElementById('catTabs').innerHTML =
+        `<div class="cat-tab ${!cid ? 'active' : ''}" onclick="location.href='/h5/index.html'">${I18N.t('for_you')}</div>` +
+        cats.map(c => `
+            <div class="cat-tab ${cid==c.id?'active':''}" onclick="location.href='/h5/index.html?category_id=${c.id}'">
+                ${I18N.pickName(c)}
+            </div>
+        `).join('');
+
+    // Products grid
+    document.getElementById('grid').innerHTML = data.products.map((p, idx) => {
+        const j = p.sold_slots, t = p.total_slots, l = t - j;
+        const percent = pct(j, t);
+        const deadline = periodDeadline(p.period_id);
+        const isHot = percent >= 70;
+        const isClosing = (deadline - Date.now()) < 6 * 3600 * 1000;
+        const badge = isClosing
+            ? I18N.t('badge_closing')
+            : (isHot ? I18N.t('badge_hot') : (idx===0 ? I18N.t('badge_new') : null));
+        const clockIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
+        return `
+        <div class="card" onclick="location.href='/h5/product.html?period_id=${p.period_id}'">
+            <div class="card-img">
+                ${badge ? `<span class="card-badge">${badge}</span>` : ''}
+                <img src="${p.cover_image || '/h5/img/products/iphone.jpg'}" alt="" loading="lazy">
+                <div class="card-countdown">
+                    ${clockIcon}
+                    <span data-countdown-deadline="${deadline}">--:--:--</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="card-title">${I18N.pickName(p)}</div>
+                <div class="card-value">${I18N.t('value')}: <b>${fmtMoney(p.value_amount)}</b></div>
+                <div class="progress"><i style="width:0%" data-pct="${percent}"></i></div>
+                <div class="card-stat">
+                    <span class="joined" data-target="${j}">0</span>
+                    <span class="total">${t}</span>
+                    <span class="left" data-target="${l}">0</span>
+                </div>
+                <div class="card-actions">
+                    <span class="icon-fav" onclick="event.stopPropagation();toggleFav(${p.id},this)">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 17.3 5.8 21l2-7L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.8 4.8 2 7z"/></svg>
+                    </span>
+                    <button class="btn btn-primary" onclick="event.stopPropagation();location.href='/h5/product.html?period_id=${p.period_id}'" data-i18n="buy">${I18N.t('buy')}</button>
+                    <span class="icon-cart" onclick="event.stopPropagation();quickBuy(${p.period_id})">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 1 1 6 0"/></svg>
+                    </span>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Animate progress bars + count-ups after paint
+    requestAnimationFrame(() => {
+        document.querySelectorAll('.progress > i[data-pct]').forEach(el => {
+            el.style.width = el.dataset.pct + '%';
+        });
+        document.querySelectorAll('[data-target]').forEach(el => {
+            const target = parseInt(el.dataset.target, 10);
+            LM.countUp(el, target, 900);
+        });
+    });
+
+    LM.bindCountdowns();
+}
+
+async function toggleFav(pid, el) {
+    if (!API.token()) { location.href = '/h5/login.html'; return; }
+    try {
+        const r = await API.post('/api/me/favorites', { product_id: pid });
+        el.classList.toggle('active', r.favored);
+        toast(r.favored ? '♥' : '−');
+    } catch (e) { toast(e.message); }
+}
+function quickBuy(pid) { location.href = '/h5/product.html?period_id=' + pid; }
+
+load().catch(e => { console.error(e); toast(e.message); });
+</script>
+</body>
+</html>

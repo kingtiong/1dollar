@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Team — JackOne</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+<style>
+.team-wrap { padding: 16px 14px 80px; }
+
+.rank-hero {
+    background: var(--gold-grad);
+    color: #1a1300;
+    border-radius: var(--r-lg);
+    padding: 18px 16px;
+    box-shadow: var(--gold-glow), var(--shadow-lg);
+    margin-bottom: 14px;
+}
+.rank-hero .top { display: flex; align-items: center; gap: 12px; }
+.rank-hero .badge {
+    width: 56px; height: 56px; border-radius: 16px;
+    background: rgba(26,19,0,.85); color: var(--gold-2);
+    display: grid; place-items: center;
+    font-weight: 900; font-size: 20px; letter-spacing: -.5px;
+    box-shadow: inset 0 0 0 2px rgba(212,175,55,.4);
+}
+.rank-hero .name { font-size: 20px; font-weight: 900; line-height: 1.15; }
+.rank-hero .sub  { font-size: 12px; opacity: .75; margin-top: 2px; font-weight: 700; letter-spacing: 1px; }
+.rank-hero .month { font-size: 11px; opacity: .65; letter-spacing: 2px; margin-top: 8px; font-weight: 700; }
+
+.stats-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+    margin-bottom: 14px;
+}
+.stat-card {
+    background: var(--bg-2); border: 1px solid var(--bd);
+    border-radius: var(--r); padding: 12px 10px; text-align: center;
+    box-shadow: var(--shadow);
+}
+.stat-card .num { font-size: 18px; font-weight: 900; color: var(--gold-2); line-height: 1.1; }
+.stat-card .lbl { font-size: 11px; color: var(--tx-mid); margin-top: 4px; font-weight: 600; letter-spacing: .5px; }
+
+.progress-box {
+    background: var(--bg-2); border: 1px solid var(--bd);
+    border-radius: var(--r-lg); padding: 14px;
+    margin-bottom: 14px; box-shadow: var(--shadow);
+}
+.progress-box .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.progress-box .head .lbl { font-size: 13px; color: var(--tx); font-weight: 700; }
+.progress-box .head .pct { font-size: 13px; color: var(--gold-2); font-weight: 900; }
+.bar { background: var(--bg-3); height: 10px; border-radius: 6px; overflow: hidden; margin-bottom: 4px; }
+.bar > i { display:block; height:100%; background: var(--gold-grad); width: 0; transition: width .8s ease; }
+.req-row { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--tx-mute); margin-top: 6px; }
+
+.section-h {
+    font-size: 13px; font-weight: 800; color: var(--tx-hi);
+    margin: 18px 4px 8px; display: flex; align-items: center; gap: 8px;
+}
+.section-h .cnt { color: var(--gold-2); font-weight: 800; }
+
+.direct-list, .bonus-list {
+    background: var(--bg-2); border: 1px solid var(--bd);
+    border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow);
+}
+.direct-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-bottom: 1px solid var(--bd);
+}
+.direct-item:last-child { border-bottom: none; }
+.direct-item .av {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--bg-3), var(--bg-elev));
+    color: var(--gold-2); font-weight: 800; font-size: 13px;
+    display: grid; place-items: center;
+    border: 1px solid var(--bd-strong);
+}
+.direct-item .info { flex: 1; }
+.direct-item .nm { font-size: 13px; font-weight: 700; color: var(--tx-hi); }
+.direct-item .dt { font-size: 11px; color: var(--tx-mute); margin-top: 2px; }
+.direct-item .vol { font-size: 13px; color: var(--gold-2); font-weight: 800; white-space: nowrap; }
+.direct-item .vol small { display: block; font-size: 10px; color: var(--tx-mute); font-weight: 600; margin-top: 1px; }
+
+.bonus-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 14px; border-bottom: 1px solid var(--bd); font-size: 13px;
+}
+.bonus-item:last-child { border-bottom: none; }
+.bonus-item .l { color: var(--tx); }
+.bonus-item .l b { color: var(--gold-2); font-weight: 700; }
+.bonus-item .depth {
+    display: inline-block; padding: 1px 6px;
+    background: rgba(212,175,55,.15); color: var(--gold-2);
+    border-radius: 6px; font-size: 10px; font-weight: 800; margin-right: 6px;
+}
+.bonus-item .amt { color: var(--gold-2); font-weight: 800; }
+.bonus-item .dt { font-size: 10px; color: var(--tx-mute); margin-top: 2px; }
+
+.empty { padding: 22px; text-align: center; color: var(--tx-mute); font-size: 13px; }
+
+.callout {
+    background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(212,175,55,.04));
+    border: 1px solid rgba(212,175,55,.3);
+    border-radius: var(--r); padding: 11px 14px;
+    color: var(--tx); font-size: 12px; line-height: 1.6; margin-top: 12px;
+}
+.callout b { color: var(--gold-2); }
+</style>
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div class="team-wrap">
+    <div class="rank-hero">
+        <div class="top">
+            <div class="badge" id="rankBadge">V0</div>
+            <div>
+                <div class="name" id="rankName"></div>
+                <div class="sub" id="rankRate"></div>
+            </div>
+        </div>
+        <div class="month" id="monthLabel"></div>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="num" id="directCnt">0</div>
+            <div class="lbl" data-i18n="direct_this_month"></div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="teamVol">¥0</div>
+            <div class="lbl" data-i18n="team_volume_lbl"></div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="earnedM">¥0</div>
+            <div class="lbl" data-i18n="earned_month_lbl"></div>
+        </div>
+    </div>
+
+    <div id="progressBox" class="progress-box" style="display:none;">
+        <div class="head">
+            <span class="lbl" id="nextRankLbl" data-i18n="progress_to_next"></span>
+            <span class="pct" id="nextRankPct">0%</span>
+        </div>
+        <div class="bar"><i id="barFill"></i></div>
+        <div class="req-row" id="reqRow"></div>
+    </div>
+
+    <div class="section-h">
+        <span data-i18n="direct_members"></span>
+        <span class="cnt" id="hDirectCnt"></span>
+    </div>
+    <div id="directList" class="direct-list"><div class="empty" data-i18n="no_directs_yet"></div></div>
+
+    <div class="section-h">
+        <span data-i18n="recent_team_bonus"></span>
+        <span class="cnt" id="hBonusCnt"></span>
+    </div>
+    <div id="bonusList" class="bonus-list"><div class="empty" data-i18n="no_bonuses_yet"></div></div>
+
+    <div class="callout" id="footTip"></div>
+</div>
+
+<script>
+Layout.mount('me');
+
+function applyI18n() {
+    document.title = I18N.t('my_team') + ' — JackOne';
+    I18N.apply();
+}
+
+function avatarChar(u) {
+    const s = (u.display_name || u.username || '?').trim();
+    return s.charAt(0).toUpperCase();
+}
+
+function fmtMoneyCny(n) {
+    n = +n || 0;
+    return '¥' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+(async function () {
+    applyI18n();
+
+    if (!API.token()) {
+        document.querySelector('.team-wrap').innerHTML =
+            `<div class="empty" style="margin-top:80px;font-size:14px;">
+                ${I18N.t('please_login_team')}
+                <div style="margin-top:14px;"><a href="/h5/login.html" class="btn btn-primary" style="display:inline-block;padding:8px 22px;">${I18N.t('login')}</a></div>
+            </div>`;
+        return;
+    }
+
+    const d = await API.get('/api/me/team');
+    const ranks = d.ranks;
+    const cur = ranks.find(r => +r.id === +d.snapshot.rank_id) || ranks[0];
+    const next = ranks.find(r => r.sort_order > cur.sort_order);
+
+    // Hero
+    document.getElementById('rankBadge').textContent = cur.code;
+    document.getElementById('rankName').textContent  = I18N.pickName(cur);
+    document.getElementById('rankRate').textContent  = (cur.bonus_rate * 100).toFixed(0) + '% ' + I18N.t('team_bonus');
+    document.getElementById('monthLabel').textContent = d.year_month + ' · ' + I18N.t('mtd');
+
+    // Stats
+    document.getElementById('directCnt').textContent = d.snapshot.direct_count;
+    document.getElementById('teamVol').textContent   = fmtMoneyCny(d.snapshot.team_volume);
+    document.getElementById('earnedM').textContent   = fmtMoneyCny(d.earned_month);
+
+    // Progress to next rank
+    if (next) {
+        const dirPct = next.min_direct > 0 ? Math.min(100, (d.snapshot.direct_count / next.min_direct) * 100) : 100;
+        const volPct = next.min_team_volume > 0 ? Math.min(100, (+d.snapshot.team_volume / next.min_team_volume) * 100) : 100;
+        const overall = Math.round(Math.min(dirPct, volPct));
+        document.getElementById('progressBox').style.display = 'block';
+        document.getElementById('nextRankPct').textContent = overall + '%';
+        document.getElementById('nextRankLbl').textContent =
+            I18N.t('to_label') + ' ' + I18N.pickName(next) + ' (' + next.code + ')';
+        const reqs = [];
+        if (next.min_direct > 0) reqs.push(`${I18N.t('direct_label')} ${d.snapshot.direct_count}/${next.min_direct}`);
+        if (+next.min_team_volume > 0) reqs.push(`${I18N.t('volume_label')} ${fmtMoneyCny(d.snapshot.team_volume)}/${fmtMoneyCny(next.min_team_volume)}`);
+        document.getElementById('reqRow').innerHTML = reqs.map(s => `<span>${s}</span>`).join('');
+        requestAnimationFrame(() => { document.getElementById('barFill').style.width = overall + '%'; });
+    }
+
+    // Directs
+    document.getElementById('hDirectCnt').textContent = '· ' + d.directs.length;
+    if (d.directs.length) {
+        document.getElementById('directList').innerHTML = d.directs.map(u => `
+            <div class="direct-item">
+                <div class="av">${avatarChar(u)}</div>
+                <div class="info">
+                    <div class="nm">${u.display_name || u.username}</div>
+                    <div class="dt">@${u.username} · ${u.created_at.substr(0,10)}</div>
+                </div>
+                <div class="vol">${fmtMoneyCny(u.volume_month)}<small>${I18N.t('this_month_short')}</small></div>
+            </div>
+        `).join('');
+    }
+
+    // Bonuses
+    document.getElementById('hBonusCnt').textContent = '· ' + d.bonuses.length;
+    if (d.bonuses.length) {
+        document.getElementById('bonusList').innerHTML = d.bonuses.map(b => `
+            <div class="bonus-item">
+                <div>
+                    <div class="l"><span class="depth">L${b.depth}</span><b>${b.from_display || b.from_username}</b></div>
+                    <div class="dt">${b.created_at} · ${(+b.rate * 100).toFixed(1)}%</div>
+                </div>
+                <div class="amt">+${fmtMoneyCny(b.amount)}</div>
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('footTip').innerHTML =
+        I18N.t('team_total_note') + ' <b>' + d.total_team + '</b> · ' +
+        I18N.t('team_settled_monthly') + ' · ' +
+        '<a href="/h5/marketing-plan.html" style="color:var(--gold-2);font-weight:700;text-decoration:underline;">' +
+        I18N.t('view_full_plan') + '</a>';
+})().catch(e => { console.error(e); if (typeof toast === 'function') toast(e.message); });
+</script>
+</body></html>

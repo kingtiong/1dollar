@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body class="detail">
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div class="periods" id="periods"></div>
+<div class="hero" id="hero"></div>
+<div class="info" id="info"></div>
+<div class="stats" id="stats"></div>
+<div class="buy-bar">
+    <button class="btn btn-primary btn-block" id="btnBuy" data-i18n="buy_now"></button>
+    <button class="btn btn-accent btn-block" id="btnFav" data-i18n="favorite"></button>
+</div>
+<div class="links">
+    <a href="javascript:void(0)" onclick="showRecords()" data-i18n="all_records">All records</a>
+    <a href="javascript:void(0)" onclick="toast('coming soon')" data-i18n="trend">Trend</a>
+    <a href="javascript:void(0)" onclick="showDesc()" data-i18n="details">Details</a>
+</div>
+
+<div id="recordsBox" class="me-list" style="margin:10px 12px"></div>
+<div id="descBox" class="me-list hidden" style="margin:10px 12px;padding:12px"></div>
+
+<div class="modal" id="buyModal">
+    <div class="modal-panel">
+        <h3 id="buyModalTitle"></h3>
+        <div class="field">
+            <label data-i18n="slots"></label>
+            <input id="buySlots" type="number" min="1" value="1">
+        </div>
+        <div class="field muted" id="buyInfo"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button class="btn btn-outline btn-block" onclick="closeModal()" data-i18n="cancel"></button>
+            <button class="btn btn-primary btn-block" onclick="doBuy()" data-i18n="confirm_buy"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+Layout.mount('all');
+const params = new URLSearchParams(location.search);
+const periodId = +params.get('period_id');
+let detail = null;
+
+async function load() {
+    detail = await API.get('/api/periods/' + periodId);
+    const p = detail.period;
+
+    const periodSuffix = I18N.get() === 'zh' ? '期' : '';
+    document.getElementById('periods').innerHTML = detail.history.map(h => `
+        <span class="p ${h.id==p.id?'active':''}" onclick="location.href='/h5/product.html?period_id=${h.id}'">
+            ${h.period_no}${periodSuffix}
+        </span>`).join('');
+
+    document.getElementById('hero').innerHTML =
+        `<img src="${p.cover_image || '/h5/img/products/iphone.jpg'}" alt="">`;
+    document.getElementById('info').innerHTML = `
+        <h1>(${p.period_no}${periodSuffix}) ${I18N.pickName(p)}</h1>
+        <div class="v">${I18N.t('value')}: ${fmtMoney(p.value_amount)}</div>
+        <div class="progress"><i style="width:${pct(p.sold_slots, p.total_slots)}%"></i></div>
+    `;
+    const left = p.total_slots - p.sold_slots;
+    document.getElementById('stats').innerHTML = `
+        <div class="joined"><div class="num">${p.sold_slots}</div><div class="label" data-i18n="joined"></div></div>
+        <div><div class="num">${p.total_slots}</div><div class="label" data-i18n="total"></div></div>
+        <div class="left"><div class="num">${left}</div><div class="label" data-i18n="remaining"></div></div>
+    `;
+
+    if (p.status == 3) {
+        document.getElementById('btnBuy').disabled = true;
+        document.getElementById('btnBuy').textContent =
+            I18N.t('winner_code_label') + ' ' + p.winner_code;
+    }
+
+    // Bargain entry — only when product is flagged and period is still open
+    if (+p.bargain_eligible === 1 && p.status == 1) {
+        const bar = document.querySelector('.buy-bar');
+        if (bar && !document.getElementById('btnBargain')) {
+            const btn = document.createElement('button');
+            btn.id = 'btnBargain';
+            btn.className = 'btn btn-accent btn-block';
+            btn.setAttribute('data-i18n', 'start_bargain');
+            btn.onclick = startBargain;
+            bar.appendChild(btn);
+        }
+    }
+
+    document.getElementById('btnBuy').onclick = openBuy;
+    document.getElementById('btnFav').onclick = async () => {
+        if (!API.token()) return location.href = '/h5/login.html';
+        const r = await API.post('/api/me/favorites', { product_id: p.product_id });
+        toast(r.favored ? '+♥' : '−');
+    };
+
+    I18N.apply();
+}
+
+function showRecords() {
+    const html = detail.records.map(r => `
+        <a><div class="icn">${(r.display_name||r.username||'?').charAt(0)}</div>
+            <div>${r.display_name || r.username}
+                <div class="muted" style="font-size:12px">${r.created_at}</div>
+            </div>
+            <span class="extra">${r.slots_count}</span>
+        </a>`).join('');
+    document.getElementById('recordsBox').innerHTML = html || `<div class="empty">${I18N.t('empty_list')}</div>`;
+}
+function showDesc() {
+    const p = detail.period;
+    const lang = I18N.get();
+    const fb = { zh:['en'], en:['zh'], si:['en','zh'], bn:['en','zh'] }[lang] || ['en','zh'];
+    let t = p['description_' + lang] || '';
+    if (!t) for (const f of fb) { if (p['description_' + f]) { t = p['description_' + f]; break; } }
+    document.getElementById('descBox').classList.remove('hidden');
+    document.getElementById('descBox').innerHTML = t || I18N.t('empty_list');
+}
+
+function openBuy() {
+    if (!API.token()) return location.href = '/h5/login.html';
+    document.getElementById('buyModal').classList.add('open');
+    document.getElementById('buyModalTitle').textContent = I18N.pickName(detail.period);
+    refreshBuyInfo();
+    document.getElementById('buySlots').oninput = refreshBuyInfo;
+}
+function closeModal() { document.getElementById('buyModal').classList.remove('open'); }
+function refreshBuyInfo() {
+    const n = Math.max(1, +document.getElementById('buySlots').value);
+    document.getElementById('buyInfo').textContent =
+        `${I18N.t('amount')}: ${fmtMoney(n * (+detail.period.slot_price))}`;
+}
+async function doBuy() {
+    const n = Math.max(1, +document.getElementById('buySlots').value);
+    try {
+        const r = await API.post('/api/periods/' + periodId + '/buy', { slots: n });
+        toast(I18N.t('purchased'));
+        closeModal();
+        setTimeout(load, 400);
+    } catch (e) { toast(e.message); }
+}
+
+async function startBargain() {
+    if (!API.token()) return location.href = '/h5/login.html';
+    try {
+        const r = await API.post('/api/bargain/start', { product_id: detail.period.product_id });
+        location.href = '/h5/bargain.html?token=' + encodeURIComponent(r.share_token);
+    } catch (e) { toast(e.message); }
+}
+
+load().catch(e => toast(e.message));
+</script>
+</body></html>

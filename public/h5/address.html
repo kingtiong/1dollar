@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Addresses</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div class="section-title" data-i18n="addresses"></div>
+<div class="me-list" id="list"></div>
+<div class="field">
+    <button class="btn btn-primary btn-block" onclick="openNew()">＋</button>
+</div>
+
+<div class="modal" id="m">
+    <div class="modal-panel">
+        <h3 data-i18n="addresses"></h3>
+        <input type="hidden" id="aId">
+        <div class="field"><label data-i18n="name"></label><input id="aName"></div>
+        <div class="field"><label data-i18n="phone"></label><input id="aPhone"></div>
+        <div class="field"><label data-i18n="address"></label><input id="aAddr"></div>
+        <div class="field"><label data-i18n="city"></label><input id="aCity"></div>
+        <div class="field"><label data-i18n="province"></label><input id="aProv"></div>
+        <div class="field"><label data-i18n="country"></label><input id="aCountry" value="Sri Lanka"></div>
+        <div class="field"><label><input type="checkbox" id="aDef"> Default</label></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button class="btn btn-outline btn-block" onclick="closeM()" data-i18n="cancel"></button>
+            <button class="btn btn-primary btn-block" onclick="save()" data-i18n="save"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+Layout.mount('me');
+
+async function load() {
+    if (!API.token()) return location.href = '/h5/login.html';
+    const rows = await API.get('/api/me/addresses');
+    document.getElementById('list').innerHTML = rows.map(a => `
+        <a><div class="icn">📍</div>
+            <div><div>${a.name} · ${a.phone}${a.is_default?' ⭐':''}</div>
+                <div class="muted" style="font-size:12px">${a.address1}, ${a.city || ''} ${a.province || ''} ${a.country}</div>
+            </div>
+            <span onclick="event.stopPropagation();edit(${a.id})" style="margin-left:auto;color:#1976d2">edit</span>
+            <span onclick="event.stopPropagation();del(${a.id})" style="margin-left:10px;color:#c62828">×</span>
+        </a>`).join('') || `<div class="empty">${I18N.t('empty_list')}</div>`;
+    window.__addrs = rows;
+    I18N.apply();
+}
+function openNew() {
+    document.getElementById('aId').value = '';
+    ['aName','aPhone','aAddr','aCity','aProv'].forEach(i => document.getElementById(i).value = '');
+    document.getElementById('aDef').checked = false;
+    document.getElementById('m').classList.add('open');
+}
+function edit(id) {
+    const a = (window.__addrs || []).find(x => x.id == id);
+    if (!a) return;
+    document.getElementById('aId').value = a.id;
+    document.getElementById('aName').value = a.name;
+    document.getElementById('aPhone').value = a.phone;
+    document.getElementById('aAddr').value = a.address1;
+    document.getElementById('aCity').value = a.city || '';
+    document.getElementById('aProv').value = a.province || '';
+    document.getElementById('aCountry').value = a.country;
+    document.getElementById('aDef').checked = !!a.is_default;
+    document.getElementById('m').classList.add('open');
+}
+function closeM() { document.getElementById('m').classList.remove('open'); }
+async function save() {
+    try {
+        await API.post('/api/me/addresses', {
+            id: +document.getElementById('aId').value || 0,
+            name: document.getElementById('aName').value,
+            phone: document.getElementById('aPhone').value,
+            address1: document.getElementById('aAddr').value,
+            city: document.getElementById('aCity').value,
+            province: document.getElementById('aProv').value,
+            country: document.getElementById('aCountry').value,
+            is_default: document.getElementById('aDef').checked ? 1 : 0,
+        });
+        closeM(); load();
+    } catch (e) { toast(e.message); }
+}
+async function del(id) {
+    if (!confirm('Delete?')) return;
+    await API.del('/api/me/addresses/' + id);
+    load();
+}
+load().catch(e => toast(e.message));
+</script>
+</body></html>

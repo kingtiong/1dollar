@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Records</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+<div class="section-title" data-i18n="my_records"></div>
+<div class="row-list" id="list"></div>
+<script>
+Layout.mount('me');
+(async () => {
+    if (!API.token()) return location.href = '/h5/login.html';
+    const rows = await API.get('/api/me/orders');
+    document.getElementById('list').innerHTML = rows.map(r => `
+        <div class="row" onclick="location.href='/h5/product.html?period_id=${r.period_id}'">
+            <div class="thumb"><img src="${r.cover_image || '/h5/img/products/iphone.jpg'}"></div>
+            <div class="info">
+                <div class="name">(${r.period_no}${I18N.get()==='zh'?'期':''}) ${I18N.pickName(r)}</div>
+                <div class="val">${I18N.t('slots')}: ${r.slots_count} · ${fmtMoney(r.amount_paid)}</div>
+                <div class="muted" style="font-size:11px">${r.created_at}</div>
+            </div>
+            <span class="extra" style="color:${r.status==3?'#2e7d32':'#999'}">${r.status==3 ? I18N.t('drawn_label') : ''}</span>
+        </div>`).join('') || `<div class="empty">${I18N.t('empty_list')}</div>`;
+    I18N.apply();
+})().catch(e => toast(e.message));
+</script>
+</body></html>

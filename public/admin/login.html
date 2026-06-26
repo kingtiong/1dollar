@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8">
+<title>Admin Login — JackOne</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/admin/css/admin.css">
+</head><body class="login">
+
+<div class="login-box">
+    <div class="brand-mark">
+        <svg viewBox="0 0 40 40" width="28" height="28" fill="currentColor" style="display:block;">
+            <path d="M8 17 L11 11 L14.5 15.5 L20 8 L25.5 15.5 L29 11 L32 17 Z"/>
+            <rect x="8" y="17" width="24" height="2.5"/>
+            <path d="M14 24 L21.5 20 L21.5 32 L27 32 L27 34.5 L13 34.5 L13 32 L17.5 32 L17.5 25 L14 26.5 Z"/>
+        </svg>
+    </div>
+    <h1>JackOne</h1>
+    <div class="subtitle">Admin Panel · One Shot, One Jackpot</div>
+
+    <label class="field-label" for="u">Username</label>
+    <input id="u" value="admin" autocomplete="username" autofocus>
+
+    <label class="field-label" for="p">Password</label>
+    <input id="p" value="admin123" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')go()">
+
+    <button class="btn btn-pri" onclick="go()" id="btn">
+        Sign In
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+    </button>
+
+    <div id="err" style="color:var(--red-2);font-size:12px;margin-top:14px;min-height:16px;font-weight:600;"></div>
+
+    <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--bd);">
+        <div style="font-size:10px;color:var(--tx-mute);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Demo credentials prefilled</div>
+        <code style="display:inline-block;padding:6px 10px;font-size:11px;">admin / admin123</code>
+    </div>
+
+    <div class="footnote">Authorized personnel only · v1.0</div>
+</div>
+
+<script>
+async function go() {
+    const btn = document.getElementById('btn');
+    const err = document.getElementById('err');
+    err.textContent = '';
+    btn.disabled = true; btn.style.opacity = '.6';
+    try {
+        const r = await fetch('/api/admin/login', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ username: u.value, password: p.value }),
+            credentials: 'include',
+        });
+        const j = await r.json();
+        if (!j.ok) { err.textContent = j.error || 'Login failed'; return; }
+        localStorage.setItem('lm.admin.token', j.data.token);
+        location.href = '/admin/index.html';
+    } catch (e) {
+        err.textContent = e.message;
+    } finally {
+        btn.disabled = false; btn.style.opacity = '1';
+    }
+}
+</script>
+</body></html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Periods</title>
+<link rel="stylesheet" href="/admin/css/admin.css"></head><body>
+<script src="/admin/js/admin.js"></script>
+<script>document.write(sidebar('periods'));</script>
+<main>
+<h1>Periods</h1>
+<table id="t"><thead><tr>
+<th>ID</th><th>Product</th><th>Period#</th><th>Total</th><th>Sold</th><th>Status</th>
+<th>Winner</th><th>Drawn at</th><th>Actions</th></tr></thead><tbody></tbody></table>
+
+<script>
+const STATUS = {1:'open',2:'drawing',3:'drawn',4:'closed'};
+async function load() {
+    const rows = await Admin.get('/api/admin/periods');
+    document.querySelector('#t tbody').innerHTML = rows.map(r => `
+        <tr>
+            <td>${r.id}</td>
+            <td><img src="${r.cover_image||''}" style="height:24px;vertical-align:middle"> ${r.name_en}</td>
+            <td>${r.period_no}</td><td>${r.total_slots}</td><td>${r.sold_slots}</td>
+            <td>${STATUS[r.status]||r.status}</td>
+            <td>${r.winner_code||''}</td>
+            <td>${r.drawn_at||''}</td>
+            <td>${r.status==1 && r.sold_slots>0 ? `<button class="btn btn-warn" onclick="draw(${r.id})">Force Draw</button>`:''}</td>
+        </tr>`).join('');
+}
+async function draw(id) {
+    if (!confirm('Force draw now?')) return;
+    try {
+        const r = await Admin.post('/api/admin/periods/'+id+'/draw', {});
+        alert('Winner: ' + r.winner_code);
+        load();
+    } catch (e) { alert(e.message); }
+}
+load();
+</script>
+</main></body></html>

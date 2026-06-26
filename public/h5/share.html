@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Share</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div class="me-hero">
+    <div data-i18n="share_note" style="opacity:.85"></div>
+    <div style="margin-top:14px;">
+        <div data-i18n="referral_code" style="opacity:.85;font-size:13px"></div>
+        <div style="font-size:26px;font-weight:800" id="code">—</div>
+    </div>
+    <div style="margin-top:10px;font-size:12px;opacity:.85" data-i18n="my_ref_link"></div>
+    <div style="background:rgba(0,0,0,.2);padding:8px;border-radius:8px;margin-top:6px;font-size:12px;word-break:break-all;" id="link">—</div>
+    <button class="btn" style="background:#fff;color:var(--c-primary);margin-top:10px;" onclick="copyLink()" data-i18n="copy"></button>
+</div>
+
+<div class="section-title">Commissions</div>
+<div class="me-list" id="list"></div>
+
+<script>
+Layout.mount('me');
+async function load() {
+    if (!API.token()) return location.href = '/h5/login.html';
+    const u = await API.get('/api/auth/me');
+    document.getElementById('code').textContent = u.referral_code;
+    document.getElementById('link').textContent =
+        location.origin + '/h5/register.html?ref=' + u.referral_code;
+
+    const c = await API.get('/api/me/commissions');
+    document.getElementById('list').innerHTML = c.list.map(r => `
+        <a><div class="icn">+</div>
+            <div><div>From @${r.from_username}</div><div class="muted" style="font-size:12px">${r.created_at}</div></div>
+            <span class="extra" style="color:#2e7d32">+${(+r.amount).toFixed(2)}</span>
+        </a>`).join('') || `<div class="empty">${I18N.t('empty_list')}</div>`;
+    I18N.apply();
+}
+function copyLink() {
+    const t = document.getElementById('link').textContent;
+    navigator.clipboard && navigator.clipboard.writeText(t);
+    toast('Copied');
+}
+load().catch(e => toast(e.message));
+</script>
+</body></html>

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Favorites</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+<div class="section-title" data-i18n="my_favs"></div>
+<div class="grid" id="g"></div>
+<script>
+Layout.mount('me');
+(async () => {
+    if (!API.token()) return location.href = '/h5/login.html';
+    const rows = await API.get('/api/me/favorites');
+    document.getElementById('g').innerHTML = rows.map(p => `
+        <div class="card" onclick="location.href='/h5/product.html?period_id=${p.period_id || p.id}'">
+            <div class="card-img"><img src="${p.cover_image}"></div>
+            <div class="card-body">
+                <div class="card-title">${I18N.pickName(p)}</div>
+                <div class="card-value">${I18N.t('value')}: ${fmtMoney(p.value_amount)}</div>
+            </div>
+        </div>`).join('') || `<div class="empty">${I18N.t('empty_list')}</div>`;
+    I18N.apply();
+})().catch(e => toast(e.message));
+</script>
+</body></html>

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>All Products</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div class="cat-tabs">
+    <div class="cat-tab active" data-i18n="all">All</div>
+    <div class="cat-tab" onclick="location.href='/h5/reveals.html'" data-i18n="upcoming">Upcoming</div>
+</div>
+
+<div class="row-list" id="list"></div>
+
+<script>
+Layout.mount('all');
+
+(async function () {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q') || '';
+    const data = await API.get('/api/products' + (q ? '?q=' + encodeURIComponent(q) : '?size=50'));
+    const html = data.list.map(p => {
+        const j = p.sold_slots, t = p.total_slots, l = t - j;
+        return `
+        <div class="row" onclick="location.href='/h5/product.html?period_id=${p.period_id}'">
+            <div class="thumb"><img src="${p.cover_image || '/h5/img/products/iphone.jpg'}" alt=""></div>
+            <div class="info">
+                <div class="name">(${p.period_no}${I18N.get()==='zh'?'期':''}) ${I18N.pickName(p)}</div>
+                <div class="val">${I18N.t('value')}: ${fmtMoney(p.value_amount)}</div>
+                <div class="progress"><i style="width:${pct(j,t)}%"></i></div>
+                <div class="card-stat">
+                    <span class="joined">${j}</span>
+                    <span>${t}</span>
+                    <span class="left">${l}</span>
+                </div>
+            </div>
+            <span class="icon-cart" onclick="event.stopPropagation();location.href='/h5/product.html?period_id=${p.period_id}'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 1 1 6 0"/></svg>
+            </span>
+        </div>`;
+    }).join('');
+    document.getElementById('list').innerHTML = html || `<div class="empty" data-i18n="empty_list">${I18N.t('empty_list')}</div>`;
+    I18N.apply();
+})().catch(e => toast(e.message));
+</script>
+</body></html>

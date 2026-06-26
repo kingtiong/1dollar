@@ -1,0 +1,47 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Payments</title>
+<link rel="stylesheet" href="/admin/css/admin.css"></head><body>
+<script src="/admin/js/admin.js"></script>
+<script>document.write(sidebar('payments'));</script>
+<main>
+<h1>Payments</h1>
+<div class="toolbar">
+    <select id="st" onchange="load()">
+        <option value="pending">Pending</option>
+        <option value="paid">Paid</option>
+        <option value="failed">Failed</option>
+    </select>
+</div>
+<table id="t"><thead><tr>
+<th>OrderNo</th><th>User</th><th>Amount</th><th>Gateway</th><th>Ref</th><th>Created</th><th>Actions</th>
+</tr></thead><tbody></tbody></table>
+
+<script>
+async function load() {
+    const st = document.getElementById('st').value;
+    const rows = await Admin.get('/api/admin/payments?status=' + st);
+    document.querySelector('#t tbody').innerHTML = rows.map(p => `
+        <tr>
+            <td>${p.order_no}</td><td>@${p.username}</td>
+            <td>$${(+p.amount).toFixed(2)}</td><td>${p.gateway}</td>
+            <td>${p.gateway_ref||''}</td><td>${p.created_at}</td>
+            <td>
+                ${p.status === 'pending' ? `
+                    <button class="btn btn-ok" onclick="approve('${p.order_no}')">Approve</button>
+                    <button class="btn btn-del" onclick="reject('${p.order_no}')">Reject</button>` : pill(p.status==='paid'?'on':(p.status==='pending'?'pending':'banned'), p.status)}
+            </td>
+        </tr>`).join('');
+}
+async function approve(o) {
+    const ref = prompt('Reference (optional)') || '';
+    try { await Admin.post('/api/admin/payments/approve', { order_no: o, gateway_ref: ref }); load(); }
+    catch (e) { alert(e.message); }
+}
+async function reject(o) {
+    if (!confirm('Reject?')) return;
+    await Admin.post('/api/admin/payments/reject', { order_no: o });
+    load();
+}
+load();
+</script>
+</main></body></html>

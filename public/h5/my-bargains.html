@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Bargains</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div class="bargain-wrap" id="root">
+    <h2 style="margin:6px 4px 14px;font-size:18px" data-i18n="my_bargains"></h2>
+    <div id="list"></div>
+</div>
+
+<script>
+Layout.mount('me');
+
+function fmt(cents) { return '¥' + (cents / 100).toFixed(2); }
+
+async function load() {
+    if (!API.token()) { location.href = '/h5/login.html'; return; }
+    try {
+        const rows = await API.get('/api/me/bargains');
+        if (!rows.length) {
+            document.getElementById('list').innerHTML =
+                `<div class="empty" data-i18n="empty_list"></div>`;
+            I18N.apply();
+            return;
+        }
+        document.getElementById('list').innerHTML = rows.map(s => {
+            const pct = Math.min(100, Math.round(s.current_cents * 100 / s.target_cents));
+            const statusKey = s.status === 'completed' ? 'completed' :
+                              s.status === 'expired'   ? 'expired'   : 'active';
+            return `
+                <a class="bargain-card" href="/h5/bargain.html?token=${encodeURIComponent(s.share_token)}"
+                   style="display:block;text-decoration:none;color:inherit">
+                    <div class="bargain-hero">
+                        <img src="${s.cover_image || '/h5/img/products/iphone.jpg'}" alt="">
+                        <div style="flex:1">
+                            <div class="name">${I18N.pickName(s)}</div>
+                            <div class="val">${fmt(s.current_cents)} / ${fmt(s.target_cents)}</div>
+                        </div>
+                        <span class="bargain-status ${statusKey}">${s.status}</span>
+                    </div>
+                    <div class="bargain-bar"><i style="width:${pct}%"></i></div>
+                    <div class="bargain-meta">
+                        <span>${I18N.tf('bargain_helpers', s.helper_count)}</span>
+                        <span>${s.created_at}</span>
+                    </div>
+                </a>`;
+        }).join('');
+        I18N.apply();
+    } catch (e) {
+        document.getElementById('list').innerHTML = '<div class="empty">' + e.message + '</div>';
+    }
+}
+load();
+</script>
+</body></html>

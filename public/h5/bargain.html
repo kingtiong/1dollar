@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bargain</title>
+<link rel="stylesheet" href="/h5/css/style.css">
+</head><body>
+<script src="/h5/js/i18n.js"></script>
+<script src="/h5/js/api.js"></script>
+<script src="/h5/js/layout.js"></script>
+
+<div class="bargain-wrap" id="root">
+    <div class="bargain-card" id="card">
+        <div style="text-align:center;padding:30px 0;color:var(--tx-mute)">Loading…</div>
+    </div>
+</div>
+
+<script>
+Layout.mount('all');
+
+const params = new URLSearchParams(location.search);
+const token = params.get('token') || '';
+let session = null;
+
+function fmt(cents) {
+    return '¥' + (cents / 100).toFixed(2);
+}
+
+function timeLeft(expiresAt) {
+    const ms = new Date(expiresAt.replace(' ', 'T') + 'Z').getTime() - Date.now();
+    if (ms <= 0) return '0h';
+    const h = Math.floor(ms / 3600000);
+    if (h >= 24) return Math.floor(h / 24) + 'd ' + (h % 24) + 'h';
+    if (h >= 1) return h + 'h';
+    return Math.max(1, Math.floor(ms / 60000)) + 'm';
+}
+
+function render() {
+    if (!session) return;
+    const s = session;
+    const remaining = Math.max(0, s.target_cents - s.current_cents);
+    const pct = Math.min(100, Math.round(s.current_cents * 100 / s.target_cents));
+    const ownerName = s.owner_name || s.owner_username || 'Friend';
+    const statusKey = s.status === 'completed' ? 'completed' :
+                      s.status === 'expired'   ? 'expired'   : 'active';
+    const statusLabel = s.status === 'completed' ? I18N.t('bargain_completed') :
+                        s.status === 'expired'   ? I18N.t('bargain_expired')   :
+                        I18N.tf('bargain_expires_in', timeLeft(s.expires_at));
+
+    let actionsHtml = '';
+    if (s.status === 'active') {
+        if (s.viewer_is_owner) {
+            actionsHtml = `
+                <div class="bargain-actions">
+                    <button class="btn btn-primary btn-block" onclick="copyShare()" data-i18n="copy_link"></button>
+                    <button class="btn btn-accent btn-block" onclick="nativeShare()" data-i18n="share_to_friends"></button>
+                </div>`;
+        } else if (s.viewer_already_helped) {
+            actionsHtml = `
+                <div class="bargain-actions">
+                    <button class="btn btn-outline btn-block" disabled data-i18n="cut_already"></button>
+                    <button class="btn btn-primary btn-block" onclick="copyShare()" data-i18n="copy_link"></button>
+                </div>`;
+        } else {
+            actionsHtml = `
+                <div class="bargain-actions">
+                    <button class="btn btn-primary btn-block" onclick="doHelp()" data-i18n="help_cut"></button>
+                    <button class="btn btn-outline btn-block" onclick="copyShare()" data-i18n="copy_link"></button>
+                </div>
+                <div class="muted" style="text-align:center;font-size:12px;margin-top:8px" data-i18n="bargain_helper_bonus"></div>`;
+        }
+    } else if (s.status === 'completed') {
+        actionsHtml = `
+            <div class="bargain-actions">
+                <a class="btn btn-primary btn-block" href="/h5/product.html?period_id=${s.product_id}" data-i18n="buy_now"></a>
+                <a class="btn btn-outline btn-block" href="/h5/me.html" data-i18n="me"></a>
+            </div>`;
+    }
+
+    document.getElementById('card').innerHTML = `
+        <div class="bargain-hero">
+            <img src="${s.cover_image || '/h5/img/products/iphone.jpg'}" alt="">
+            <div style="flex:1">
+                <div class="name">${I18N.pickName(s)}</div>
+                <div class="val">${I18N.t('value')}: ${fmtMoney(s.value_amount)}</div>
+                <div style="font-size:12px;color:var(--tx-mute);margin-top:4px">@${ownerName}</div>
+            </div>
+            <span class="bargain-status ${statusKey}">${statusLabel}</span>
+        </div>
+        <div class="bargain-amounts">
+            <div>
+                <div class="cut">${fmt(s.current_cents)}</div>
+                <div class="muted" style="font-size:11px" data-i18n="bargain"></div>
+            </div>
+            <div class="left">
+                ${s.status === 'active'
+                    ? I18N.tf('bargain_remaining_now', (remaining / 100).toFixed(2))
+                    : ''}
+            </div>
+        </div>
+        <div class="bargain-bar"><i style="width:${pct}%"></i></div>
+        <div class="bargain-meta">
+            <span>${I18N.tf('bargain_progress', fmt(s.current_cents), fmt(s.target_cents))}</span>
+            <span>${I18N.tf('bargain_helpers', s.helper_count)}</span>
+        </div>
+        ${actionsHtml}
+        <div class="bargain-help-list">
+            ${(s.helps || []).map(h => `
+                <div class="bargain-help-item">
+                    <div class="who">${h.display_name || h.username}</div>
+                    <span class="amt">-${fmt(h.amount_cents)}</span>
+                </div>`).join('')}
+        </div>
+    `;
+    I18N.apply();
+}
+
+async function load() {
+    if (!token) {
+        document.getElementById('card').innerHTML = '<div class="empty">Missing token</div>';
+        return;
+    }
+    try {
+        session = await API.get('/api/bargain/' + encodeURIComponent(token));
+        render();
+    } catch (e) {
+        document.getElementById('card').innerHTML = '<div class="empty">' + e.message + '</div>';
+    }
+}
+
+async function doHelp() {
+    if (!API.token()) return location.href = '/h5/login.html?next=' + encodeURIComponent(location.pathname + location.search);
+    try {
+        const r = await API.post('/api/bargain/help', { token });
+        toast(I18N.tf('cut_done', (r.cut_cents / 100).toFixed(2)));
+        if (r.completed) {
+            setTimeout(() => toast(I18N.t('bargain_completed')), 1200);
+        }
+        await load();
+    } catch (e) { toast(e.message); }
+}
+
+function shareUrl() {
+    return location.origin + '/h5/bargain.html?token=' + encodeURIComponent(token);
+}
+
+async function copyShare() {
+    const url = shareUrl();
+    try {
+        await navigator.clipboard.writeText(url);
+        toast(I18N.t('link_copied'));
+    } catch (e) {
+        // Fallback for browsers without clipboard API
+        const ta = document.createElement('textarea');
+        ta.value = url; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); toast(I18N.t('link_copied')); }
+        finally { document.body.removeChild(ta); }
+    }
+}
+
+async function nativeShare() {
+    const url = shareUrl();
+    const title = (session && I18N.pickName(session)) || 'JackOne';
+    if (navigator.share) {
+        try { await navigator.share({ title, url }); return; } catch (e) {}
+    }
+    copyShare();
+}
+
+load();
+</script>
+</body></html>

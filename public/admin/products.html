@@ -1,0 +1,99 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Products</title>
+<link rel="stylesheet" href="/admin/css/admin.css"></head><body>
+<script src="/admin/js/admin.js"></script>
+<script>document.write(sidebar('products'));</script>
+<main>
+<h1>Products</h1>
+<div class="toolbar">
+    <button class="btn btn-pri" onclick="openNew()">+ New Product</button>
+</div>
+<table id="t">
+<thead><tr><th>ID</th><th>Image</th><th>Name (en)</th><th>Category</th>
+<th>Value</th><th>Slots</th><th>Status</th><th>Actions</th></tr></thead>
+<tbody></tbody></table>
+
+<div class="modal" id="m"><div class="modal-panel">
+<h3 id="title">Edit Product</h3>
+<input type="hidden" id="f-id">
+<div class="row"><label>name_en</label><input id="f-name_en"></div>
+<div class="row"><label>name_zh</label><input id="f-name_zh"></div>
+<div class="row"><label>name_si <small>(සිංහල)</small></label><input id="f-name_si" placeholder="optional"></div>
+<div class="row"><label>name_bn <small>(বাংলা)</small></label><input id="f-name_bn" placeholder="optional"></div>
+<div class="row"><label>category_id</label><input id="f-category_id" type="number"></div>
+<div class="row"><label>cover_image</label><input id="f-cover_image" placeholder="/h5/img/...svg"></div>
+<div class="row"><label>value_amount</label><input id="f-value_amount" type="number"></div>
+<div class="row"><label>slot_price</label><input id="f-slot_price" type="number" value="1"></div>
+<div class="row"><label>default_total_slots</label><input id="f-default_total_slots" type="number"></div>
+<div class="row"><label>description_en</label><textarea id="f-description_en" rows="3"></textarea></div>
+<div class="row"><label>description_zh</label><textarea id="f-description_zh" rows="3"></textarea></div>
+<div class="row"><label>description_si <small>(සිංහල)</small></label><textarea id="f-description_si" rows="3" placeholder="optional"></textarea></div>
+<div class="row"><label>description_bn <small>(বাংলা)</small></label><textarea id="f-description_bn" rows="3" placeholder="optional"></textarea></div>
+<div class="row"><label>status</label><select id="f-status"><option value="1">on</option><option value="0">off</option></select></div>
+<div class="row"><label>bargain_eligible</label>
+    <label style="display:inline-flex;align-items:center;gap:6px;font-weight:400">
+        <input id="f-bargain_eligible" type="checkbox" value="1">
+        <small>let users start "砍一刀" sessions on this product</small>
+    </label>
+</div>
+<div class="row"><label>bargain_target_cents</label>
+    <input id="f-bargain_target_cents" type="number" min="0" placeholder="leave empty → uses slot_price × 100">
+</div>
+<div style="text-align:right">
+    <button class="btn btn-sec" onclick="closeM()">Cancel</button>
+    <button class="btn btn-pri" onclick="save()">Save</button>
+</div>
+</div></div>
+
+<script>
+async function load() {
+    const rows = await Admin.get('/api/admin/products');
+    document.querySelector('#t tbody').innerHTML = rows.map(p => `
+        <tr>
+            <td>${p.id}</td>
+            <td><img src="${p.cover_image||''}" style="height:30px"></td>
+            <td>${p.name_en}${+p.bargain_eligible ? ' <span title="bargain enabled" style="color:#d4af37">🔪</span>' : ''}</td>
+            <td>${p.category||''}</td>
+            <td>$${(+p.value_amount).toFixed(2)}</td>
+            <td>${p.default_total_slots}</td>
+            <td>${p.status?pill('on','on'):pill('off','off')}</td>
+            <td>
+                <button class="btn btn-sec" onclick='edit(${JSON.stringify(p)})'>Edit</button>
+                <button class="btn btn-del" onclick="del(${p.id})">Off</button>
+            </td>
+        </tr>`).join('');
+}
+const FIELDS = ['id','name_en','name_zh','name_si','name_bn','category_id','cover_image',
+    'value_amount','slot_price','default_total_slots',
+    'description_en','description_zh','description_si','description_bn','status',
+    'bargain_target_cents'];
+const CHECKBOX_FIELDS = ['bargain_eligible'];
+function openNew() {
+    FIELDS.forEach(k => { if (k !== 'status') document.getElementById('f-'+k).value = ''; });
+    CHECKBOX_FIELDS.forEach(k => { document.getElementById('f-'+k).checked = false; });
+    document.getElementById('f-status').value = '1';
+    document.getElementById('m').classList.add('open');
+}
+function edit(p) {
+    for (const k of FIELDS) document.getElementById('f-'+k).value = p[k] ?? '';
+    for (const k of CHECKBOX_FIELDS) document.getElementById('f-'+k).checked = !!+p[k];
+    document.getElementById('m').classList.add('open');
+}
+function closeM() { document.getElementById('m').classList.remove('open'); }
+async function save() {
+    const data = {};
+    for (const k of FIELDS) data[k] = document.getElementById('f-'+k).value;
+    for (const k of CHECKBOX_FIELDS) data[k] = document.getElementById('f-'+k).checked ? 1 : 0;
+    try {
+        await Admin.post('/api/admin/products', data);
+        closeM(); load();
+    } catch (e) { alert(e.message); }
+}
+async function del(id) {
+    if (!confirm('Take offline?')) return;
+    await Admin.del('/api/admin/products/' + id);
+    load();
+}
+load();
+</script>
+</main></body></html>
